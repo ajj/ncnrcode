@@ -32,6 +32,7 @@ proc loadBT5File  {fileName x c t m} {
 	set det4(0) 0
 	set det5(0) 0
 	set xvar(0) 0
+	set trans(0) 0
 
 	if [catch {open $fileName r} fileId] {
 
