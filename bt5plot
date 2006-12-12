@@ -2,6 +2,10 @@
 
 package require BLT
 
+# Set default directory
+
+set defdir [pwd] 
+
 set images(normal) [image create photo -format gif -data {
     R0lGODlhEAANAMIAAAAAAH9/f///////AL+/vwAA/wAAAAAAACH5BAEAAAUALAAAAAAQAA0A
     AAM1WBrM+rAEMigJ8c3Kb3OSII6kGABhp1JnaK1VGwjwKwtvHqNzzd263M3H4n2OH1QBwGw6
@@ -14,9 +18,9 @@ set images(active) [image create photo -format gif -data {
     ZTKAsiCtWq0JADs=
 } ]
 
-proc loadBT5File  {fileName x c t m} {
+proc loadBT5File  {fileName x c cr t m} {
 	global datasets
-	global $x $c $t $m
+	global $x $c $cr $t $m
 
 	#puts "In load proc: $x $c $cr $t $m"
 
@@ -28,7 +32,6 @@ proc loadBT5File  {fileName x c t m} {
 	set det4(0) 0
 	set det5(0) 0
 	set xvar(0) 0
-	set trans(0) 0
 
 	if [catch {open $fileName r} fileId] {
 
@@ -62,6 +65,7 @@ proc loadBT5File  {fileName x c t m} {
 	foreach index [lsort -integer [array names xvar]] {
 		$x append {$xvar($index)}
 		$c append {$det1($index)+$det2($index)+$det3($index)+$det4($index)+$det5($index)}
+		$cr append [expr [$c index $index] / $counttime]
 		$t append {$trans($index)}
 		$m append {$mon($index)}
 	}
@@ -77,6 +81,7 @@ proc resetGraph { } {
 		$graph element delete $elem
 
 		set xvec [join "$elem _xvec" ""]
+		set countratevec [join "$elem _countratevec" ""]
 		set countvec [join "$elem _countvec" ""]
 		set transvec [join "$elem _transvec" ""]
 		set monvec [join "$elem _monvec" ""]
@@ -84,6 +89,7 @@ proc resetGraph { } {
 		global $xvec $countvec $transvec $monvec
 	
 		blt::vector destroy $xvec
+		blt::vector destroy $countratevec
 		blt::vector destroy $countvec
 		blt::vector destroy $transvec 
 		blt::vector destroy $monvec
@@ -99,6 +105,7 @@ proc addremovePlot { nodeID } {
 	global tv
 	global images
 	global .tree
+	global plotType
 	
 	set fileName [.tree label $nodeID]	
 	#puts "$nodeID $fileName" 	
@@ -110,6 +117,7 @@ proc addremovePlot { nodeID } {
 		$tv entry configure $nodeID -icons "$images(active) $images(active)" 
 
 		set xvec [join "$filebase _xvec" ""]
+		set countratevec [join "$filebase _countratevec" ""]
 		set countvec [join "$filebase _countvec" ""]
 		set transvec [join "$filebase _transvec" ""]
 		set monvec [join "$filebase _monvec" ""]
@@ -117,16 +125,23 @@ proc addremovePlot { nodeID } {
 		global $xvec $countvec $transvec $monvec
 	
 		blt::vector create $xvec
+		blt::vector create $countratevec
 		blt::vector create $countvec
 		blt::vector create $transvec 
 		blt::vector create $monvec
 
-		loadBT5File $fileName $xvec $countvec $transvec $monvec
+		loadBT5File $fileName $xvec $countvec $countratevec $transvec $monvec
 
 		$graph element create $filebase -symbol scross \
 			-xdata $xvec  \
 			-ydata $countvec
 
+		switch -exact $plotType {
+			count { $graph element configure $filebase -ydata $countvec}
+			countrate { $graph element configure $filebase -ydata $countratevec}
+			trans { $graph element configure $filebase -ydata $transvec}
+			mon { $graph element configure $filebase -ydata  $monvec}
+		}
 
 	} else {
 		$tv entry configure $nodeID -activeicons "$images(normal) $images(normal)"
@@ -135,6 +150,7 @@ proc addremovePlot { nodeID } {
 		$graph element delete $filebase
 	
 		set xvec [join "$filebase _xvec" ""]
+		set countratevec [join "$filebase _countratevec" ""]
 		set countvec [join "$filebase _countvec" ""]
 		set transvec [join "$filebase _transvec" ""]
 		set monvec [join "$filebase _monvec" ""]
@@ -142,6 +158,7 @@ proc addremovePlot { nodeID } {
 		global $xvec $countvec $transvec $monvec
 	
 		blt::vector destroy $xvec
+		blt::vector destroy $countratevec
 		blt::vector destroy $countvec
 		blt::vector destroy $transvec 
 		blt::vector destroy $monvec
@@ -152,10 +169,12 @@ proc addremovePlot { nodeID } {
 
 
 proc LoadTree { tree parentNode dir } {
+	set saved [pwd]
 	cd $dir
 	foreach f [lsort [glob *.bt5]] {
 		set e [$tree insert $parentNode -label $f -data "Plot 0"]
 	}
+	cd $saved
 }
 
 proc EmptyTree { tree } {
@@ -165,28 +184,31 @@ proc EmptyTree { tree } {
 proc selectDirectory {} {
 	
 	global .tree 
+	global defdir
 	
 	set dir [tk_chooseDirectory -title "Set Data Directory"]
 
 	if {$dir ne ""} {
 		EmptyTree .tree
 		LoadTree .tree 0 $dir
-		cd $dir
+		set defdir $dir	
 	}	
 }
 
 proc resetTree { } {
 
 	global .tree
+	global defdir
 
 	EmptyTree .tree
-	LoadTree .tree 0 [pwd]
+	LoadTree .tree 0 $defdir
 }
 
 
 proc filterTree { filterString } {
 	
 	global .tree
+	global defdir
 
 	resetTree
 	
@@ -208,7 +230,7 @@ $m add command -label "Set Data Dir" -command selectDirectory
 
 # Create tree
 blt::tree create .tree
-LoadTree .tree 0 [pwd]
+LoadTree .tree 0 $defdir 
 
 # Create view+plot frame
 frame .vp
@@ -245,11 +267,22 @@ bind .filter.filterEntry <Return> {filterTree [%W get]}
 #button .filter.filterButton -text "Filter" -command {filterTree [.filter.filterEntry get]} 
 pack .filter.filterLabel -side left
 pack .filter.filterEntry -side left 
+#pack .filter.filterButton -side left
+#pack .filter.filterReset -side right -padx 25
 
 #Plot controls
 set pcf [frame .filter.pc]
 button $pcf.filterReset -text "Clear Plot" -command {resetGraph}
+radiobutton $pcf.c -text "Counts" -variable plotType -value "count"
+radiobutton $pcf.cr -text "Count Rate" -variable plotType -value "countrate"
+radiobutton $pcf.t -text "Trans" -variable plotType -value "trans"
+radiobutton $pcf.m -text "Mon" -variable plotType -value "mon"
+$pcf.c select
 pack $pcf.filterReset -side right -padx 25
+pack $pcf.m -side right
+pack $pcf.t -side right
+pack $pcf.cr -side right
+pack $pcf.c -side right 
 pack $pcf -side right
 
 
