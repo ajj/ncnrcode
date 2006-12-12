@@ -1,0 +1,273 @@
+#!/usr/bin/wish
+
+package require BLT
+
+# Set default directory
+
+set defdir [pwd] 
+
+set images(normal) [image create photo -format gif -data {
+    R0lGODlhEAANAMIAAAAAAH9/f///////AL+/vwAA/wAAAAAAACH5BAEAAAUALAAAAAAQAA0A
+    AAM1WBrM+rAEMigJ8c3Kb3OSII6kGABhp1JnaK1VGwjwKwtvHqNzzd263M3H4n2OH1QBwGw6
+    nQkAOw==
+} ]
+
+set images(active) [image create photo -format gif -data {
+    R0lGODlhEAANAMIAAAAAAH9/f/////+/AL+/vwAA/wAAAAAAACH5BAEAAAUALAAAAAAQAA0A
+    AAM8WBrM+rAEQWmIb5KxiWjNInCkV32AJHRlGQBgDA7vdN4vUa8tC78qlrCWmvRKsJTquHkp
+    ZTKAsiCtWq0JADs=
+} ]
+
+proc loadBT5File  {fileName x c t m} {
+	global datasets
+	global $x $c $t $m
+
+	#puts "In load proc: $x $c $cr $t $m"
+
+	set lc 0
+	set mon(0) 0
+	set det1(0) 0
+	set det2(0) 0
+	set det3(0) 0
+	set det4(0) 0
+	set det5(0) 0
+	set xvar(0) 0
+
+	if [catch {open $fileName r} fileId] {
+
+		puts stderr "Cannot open file for reading: $fileId"
+
+	} else {
+		for {set lc 0} {$lc < 13} {incr lc} {
+			gets $fileId line
+			if { $lc == 0 } {
+				regexp {^\'.+?\' \'.+?\' \'.+?\'.+?(\d+)\..+} $line match counttime
+			}
+		}	
+
+		set lc 0
+		while true {
+			if {[gets $fileId line] < 0} {
+				break
+			} else {
+				regexp {^ +([^ ]+).*} $line match xvar($lc)
+			}
+
+			gets $fileId line
+			regexp {^ (.+?),(.+?),(.+?),(.+?),(.+?),(.+?),(.+?),.*} $line match mon($lc) \
+					det2($lc) det1($lc) trans($lc) det3($lc) det4($lc) det5($lc)
+			incr lc
+		}
+
+		close $fileId
+	}
+
+	foreach index [lsort -integer [array names xvar]] {
+		$x append {$xvar($index)}
+		$c append {$det1($index)+$det2($index)+$det3($index)+$det4($index)+$det5($index)}
+		$t append {$trans($index)}
+		$m append {$mon($index)}
+	}
+
+}
+
+proc resetGraph { } {
+	global graph
+	global tv
+	global images
+
+	foreach elem [ $graph element show] {
+		$graph element delete $elem
+
+		set xvec [join "$elem _xvec" ""]
+		set countvec [join "$elem _countvec" ""]
+		set transvec [join "$elem _transvec" ""]
+		set monvec [join "$elem _monvec" ""]
+	
+		global $xvec $countvec $transvec $monvec
+	
+		blt::vector destroy $xvec
+		blt::vector destroy $countvec
+		blt::vector destroy $transvec 
+		blt::vector destroy $monvec
+	}
+	
+	$tv entry configure all -activeicons "$images(normal) $images(normal)"
+	$tv entry configure all -icons "$images(normal) $images(normal)"
+}
+
+#foreach fileName $argv {
+proc addremovePlot { nodeID } {
+	global graph
+	global tv
+	global images
+	global .tree
+	
+	set fileName [.tree label $nodeID]	
+	#puts "$nodeID $fileName" 	
+	set filebase [string trimright $fileName .bt5]
+
+	if { ! [$graph element exists $filebase] } {
+
+		$tv entry configure $nodeID -activeicons "$images(active) $images(active)"
+		$tv entry configure $nodeID -icons "$images(active) $images(active)" 
+
+		set xvec [join "$filebase _xvec" ""]
+		set countvec [join "$filebase _countvec" ""]
+		set transvec [join "$filebase _transvec" ""]
+		set monvec [join "$filebase _monvec" ""]
+	
+		global $xvec $countvec $transvec $monvec
+	
+		blt::vector create $xvec
+		blt::vector create $countvec
+		blt::vector create $transvec 
+		blt::vector create $monvec
+
+		loadBT5File $fileName $xvec $countvec $transvec $monvec
+
+		$graph element create $filebase -symbol scross \
+			-xdata $xvec  \
+			-ydata $countvec
+
+
+	} else {
+		$tv entry configure $nodeID -activeicons "$images(normal) $images(normal)"
+		$tv entry configure $nodeID -icons "$images(normal) $images(normal)"		
+	
+		$graph element delete $filebase
+	
+		set xvec [join "$filebase _xvec" ""]
+		set countvec [join "$filebase _countvec" ""]
+		set transvec [join "$filebase _transvec" ""]
+		set monvec [join "$filebase _monvec" ""]
+	
+		global $xvec $countvec $transvec $monvec
+	
+		blt::vector destroy $xvec
+		blt::vector destroy $countvec
+		blt::vector destroy $transvec 
+		blt::vector destroy $monvec
+
+	
+	}
+}
+
+
+proc LoadTree { tree parentNode dir } {
+	set saved [pwd]
+	cd $dir
+	foreach f [lsort [glob *.bt5]] {
+		set e [$tree insert $parentNode -label $f -data "Plot 0"]
+	}
+	cd $saved
+}
+
+proc EmptyTree { tree } {
+	$tree delete 0
+}
+
+proc selectDirectory {} {
+	
+	global .tree 
+	global defdir
+	
+	set dir [tk_chooseDirectory -title "Set Data Directory"]
+
+	if {$dir ne ""} {
+		EmptyTree .tree
+		LoadTree .tree 0 $dir
+		set defdir $dir	
+	}	
+}
+
+proc resetTree { } {
+
+	global .tree
+	global defdir
+
+	EmptyTree .tree
+	LoadTree .tree 0 $defdir
+}
+
+
+proc filterTree { filterString } {
+	
+	global .tree
+	global defdir
+
+	resetTree
+	
+	if {$filterString ne ""} {
+		set filterlist [.tree find 0 -glob $filterString -invert -depth 1]
+		foreach node $filterlist {
+			if { $node != 0 } {
+				.tree delete $node
+			}
+		}
+	}	
+	
+}
+
+# Create menu
+menubutton .mb -text File -menu .mb.fileMenu
+set m [menu .mb.fileMenu -tearoff 0]
+$m add command -label "Set Data Dir" -command selectDirectory
+
+# Create tree
+blt::tree create .tree
+LoadTree .tree 0 $defdir 
+
+# Create view+plot frame
+frame .vp
+# Create treeview frame
+set tvf [frame .vp.tvf]
+
+set tv [blt::treeview $tvf.t -tree .tree -scrollmode listbox \
+					-xscrollcommand "$tvf.xscroll set" \
+					-yscrollcommand "$tvf.yscroll set" \
+					-activeicons "$images(normal) $images(normal)" \
+					-icons "$images(normal) $images(normal)"]
+#$tvf.t column insert end Plot
+scrollbar $tvf.xscroll -orient horizontal -command "$tvf.t xview"
+scrollbar $tvf.yscroll -orient vertical -command "$tvf.t yview"
+
+#$tvf.t bind all <ButtonPress-1> {puts stdout [.tree label [%W curselection]]}
+$tvf.t bind all <ButtonPress-1> {addremovePlot [%W curselection]}
+
+pack $tvf.xscroll -side bottom -fill x
+pack $tvf.yscroll -side right -fill y
+pack $tvf.t -side left -fill both -expand true
+pack $tvf -side left -fill y -anchor w
+
+# Create graph
+set graph [blt::graph .vp.g]
+pack $graph -fill both -expand true -side left -anchor w
+
+# Create filter frame
+frame .filter
+label .filter.filterLabel -text "Filter: "
+entry .filter.filterEntry
+bind .filter.filterEntry <Return> {filterTree [%W get]}
+
+#button .filter.filterButton -text "Filter" -command {filterTree [.filter.filterEntry get]} 
+pack .filter.filterLabel -side left
+pack .filter.filterEntry -side left 
+
+#Plot controls
+set pcf [frame .filter.pc]
+button $pcf.filterReset -text "Clear Plot" -command {resetGraph}
+pack $pcf.filterReset -side right -padx 25
+pack $pcf -side right
+
+
+# Pack  widgets
+pack .mb -side top -anchor w
+pack .vp -fill both -expand true -anchor w
+pack .filter -side bottom -fill x -anchor sw
+
+Blt_ZoomStack $graph
+
+
+
+
