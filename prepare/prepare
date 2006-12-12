@@ -19,6 +19,8 @@
 #             Mar  2003 Add support for diffraction buffers - NCM
 #             Mar  2004 Change packing of GUI to permit expansion of buf list
 #                       Fix buffer copy bug - KOD
+#	      May  2006 Change contents of I-Buffer list to show relevant
+#                       motors for BT5 - AJJ
 set version {$Id: prepare.tcl,v 1.47 2005/08/11 19:55:25 nickm Exp $}
 # set tcl_precision 12
 #set config(root) $env(HOME)
@@ -864,7 +866,7 @@ proc IBufList { } {
     set lbox .l.list
     set start [expr int([lindex [$lbox yview] 0] * [$lbox index end])]
     $lbox delete 0 end
-    #$lbox configure -font fixed
+    $lbox configure -font {-family courier -size 12}
     for {set i 0} {$i < 30} {incr i} {
 	$lbox insert end [IBufFormatRec $i]
     }
@@ -881,16 +883,19 @@ proc IBufList { } {
 
 proc IBufFormatRec { recno } {
     global ibuf
-    set output [format "%2d " [expr $recno + 1]]
+    set output [format "%-3d " [expr $recno + 1]]
     append output [binary format A20 $ibuf($recno,comment)]
-    append output [format " %6.2f "  $ibuf($recno,a4beg)]
-    append output [format "%6.2f "   $ibuf($recno,a4end)]
-    append output [format "%5.2f "   $ibuf($recno,a4inc)]
+    append output [format " %8.2f"  $ibuf($recno,a2beg)]
+    append output [format "%8.2f"   $ibuf($recno,a2end)]
+    append output [format "%8.2f"   $ibuf($recno,a2inc)]
+    append output [format "%8.2f"  $ibuf($recno,a5beg)]
+    append output [format "%8.2f"   $ibuf($recno,a5end)]
+    append output [format "%8.2f"   $ibuf($recno,a5inc)]
     append output [format "%2.0f\* " $ibuf($recno,mpf)]
     append output [format "%6.0f "   $ibuf($recno,mon)]
     append output [binary format A4  $ibuf($recno,mt)]
-    append output [format " %6.1f"   $ibuf($recno,t0)]
-    append output [format "%4.0f "   $ibuf($recno,th0)]
+    append output [format "%6.1f"   $ibuf($recno,t0)]
+    append output [format "%4.0f"   $ibuf($recno,th0)]
  
     return $output
 }
@@ -5428,7 +5433,8 @@ proc SwitchBuf { which } {
     switch $which {
 	increment {
 	    .l.title configure -text \
-		    "No Comment *I-Buffer*   A4-beg A4-end  Inc    Monitor        Temp Hold"
+		    "#  Comment *I-Buf*         A2-beg  A2-end  A2-Inc  A5-beg  A5-end  A5-Inc Monitor         Temp  Hold"\
+		    -font {-family courier -size 11}
 	    IBufReadFile ;# Make sure we get the latest data from disk
 	    IBufList
 	    notebook_display .e ibuf
