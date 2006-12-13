@@ -183,7 +183,21 @@ proc changePlotType {elem} {
 			mon { $graph element configure $elem -ydata  $monvec}
 	}
 }
-	
+
+proc changeLogLinY {} {
+	global graph
+	global loglinY
+
+	$graph axis configure y -logscale $loglinY
+}	
+
+proc changeLogLinX {} {
+	global graph
+	global loglinX
+
+	$graph axis configure x -logscale $loglinX
+}	
+
 proc LoadTree { tree parentNode dir } {
 	cd $dir
 	foreach f [lsort [glob *.bt5]] {
@@ -203,7 +217,7 @@ proc selectDirectory {} {
 
 	if {$dir ne ""} {
 		EmptyTree .tree
-		LoadTree .tree 0 $dir
+		catch { LoadTree .tree 0 $dir } result
 		cd $dir
 	}	
 }
@@ -283,17 +297,43 @@ pack .filter.filterEntry -side left
 
 #Plot controls
 set pcf [frame .filter.pc]
+#Clear plot button
 button $pcf.filterReset -text "Clear Plot" -command {resetGraph}
-radiobutton $pcf.c -text "Counts" -variable plotType -value "count" -command {foreach elem [$graph element show] { changePlotType $elem  }}
-radiobutton $pcf.cr -text "Count Rate" -variable plotType -value "countrate" -command {foreach elem [$graph element show] { changePlotType $elem  }}
-radiobutton $pcf.t -text "Trans" -variable plotType -value "trans" -command {foreach elem [$graph element show] { changePlotType $elem  }}
-radiobutton $pcf.m -text "Mon" -variable plotType -value "mon" -command {foreach elem [$graph element show] { changePlotType $elem  }}
-$pcf.c select
+
+#Frame for radiobutton set to control plot type
+set ptf [frame .filter.pc.pt -borderwidth 1 -relief raised]
+radiobutton $ptf.c -text "Counts" -variable plotType -value "count" -command {foreach elem [$graph element show] { changePlotType $elem  }}
+radiobutton $ptf.cr -text "Count Rate" -variable plotType -value "countrate" -command {foreach elem [$graph element show] { changePlotType $elem  }}
+radiobutton $ptf.t -text "Trans" -variable plotType -value "trans" -command {foreach elem [$graph element show] { changePlotType $elem  }}
+radiobutton $ptf.m -text "Mon" -variable plotType -value "mon" -command {foreach elem [$graph element show] { changePlotType $elem  }}
+$ptf.c select
+pack $ptf.m -side right
+pack $ptf.t -side right
+pack $ptf.cr -side right
+pack $ptf.c -side right 
+
+#Frame for y-axis log/lin choice
+set logfy [frame .filter.pc.logy -borderwidth 1 -relief raised]
+#Log/lin radiobutton set
+radiobutton $logfy.log -text "Log Y" -variable loglinY -value "yes" -command { changeLogLinY }
+radiobutton $logfy.lin -text "Lin Y" -variable loglinY -value "no" -command { changeLogLinY }
+$logfy.lin select
+pack $logfy.log -side right
+pack $logfy.lin -side right
+
+#Frame for y-axis log/lin choice
+set logfx [frame .filter.pc.logx -borderwidth 1 -relief raised]
+#Log/lin radiobutton set
+radiobutton $logfx.log -text "Log X" -variable loglinX -value "yes" -command { changeLogLinX }
+radiobutton $logfx.lin -text "Lin X" -variable loglinX -value "no" -command { changeLogLinX }
+$logfx.lin select
+pack $logfx.log -side right
+pack $logfx.lin -side right
+
 pack $pcf.filterReset -side right -padx 25
-pack $pcf.m -side right
-pack $pcf.t -side right
-pack $pcf.cr -side right
-pack $pcf.c -side right 
+pack $logfy -side right
+pack $logfx -side right
+pack $ptf -side right
 pack $pcf -side right
 
 
