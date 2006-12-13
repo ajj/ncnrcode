@@ -164,7 +164,26 @@ proc addremovePlot { nodeID } {
 	}
 }
 
+proc changePlotType {elem} {
+	global graph
+	global plotType
 
+	set xvec [join "$elem _xvec" ""]
+	set countratevec [join "$elem _countratevec" ""]
+	set countvec [join "$elem _countvec" ""]
+	set transvec [join "$elem _transvec" ""]
+	set monvec [join "$elem _monvec" ""]
+
+	global $xvec $countvec $transvec $monvec
+	
+	switch -exact $plotType {
+			count { $graph element configure $elem -ydata $countvec}
+			countrate { $graph element configure $elem -ydata $countratevec}
+			trans { $graph element configure $elem -ydata $transvec}
+			mon { $graph element configure $elem -ydata  $monvec}
+	}
+}
+	
 proc LoadTree { tree parentNode dir } {
 	cd $dir
 	foreach f [lsort [glob *.bt5]] {
@@ -265,10 +284,10 @@ pack .filter.filterEntry -side left
 #Plot controls
 set pcf [frame .filter.pc]
 button $pcf.filterReset -text "Clear Plot" -command {resetGraph}
-radiobutton $pcf.c -text "Counts" -variable plotType -value "count"
-radiobutton $pcf.cr -text "Count Rate" -variable plotType -value "countrate"
-radiobutton $pcf.t -text "Trans" -variable plotType -value "trans"
-radiobutton $pcf.m -text "Mon" -variable plotType -value "mon"
+radiobutton $pcf.c -text "Counts" -variable plotType -value "count" -command {foreach elem [$graph element show] { changePlotType $elem  }}
+radiobutton $pcf.cr -text "Count Rate" -variable plotType -value "countrate" -command {foreach elem [$graph element show] { changePlotType $elem  }}
+radiobutton $pcf.t -text "Trans" -variable plotType -value "trans" -command {foreach elem [$graph element show] { changePlotType $elem  }}
+radiobutton $pcf.m -text "Mon" -variable plotType -value "mon" -command {foreach elem [$graph element show] { changePlotType $elem  }}
 $pcf.c select
 pack $pcf.filterReset -side right -padx 25
 pack $pcf.m -side right
