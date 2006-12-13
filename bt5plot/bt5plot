@@ -248,10 +248,38 @@ proc filterTree { filterString } {
 	
 }
 
-# Create menu
-menubutton .mb -text File -menu .mb.fileMenu
-set m [menu .mb.fileMenu -tearoff 0]
-$m add command -label "Set Data Dir" -command selectDirectory
+#Create menu frame
+set mf [frame .mf]
+
+# Create File menu
+menubutton $mf.filemb -text File -menu $mf.filemb.fileMenu
+set fm [menu $mf.filemb.fileMenu -tearoff 0]
+$fm add command -label "Set Data Dir" -command selectDirectory
+
+#Create Plot menu
+menubutton $mf.plotmb -text Plot -menu $mf.plotmb.plotMenu
+set pm [menu $mf.plotmb.plotMenu -tearoff 0]
+$pm add cascade -label "Type" -menu $pm.type
+$pm add cascade -label "X-Axis" -menu $pm.xaxis
+$pm add cascade -label "Y-Axis" -menu $pm.yaxis
+#Create sub menus
+set xam [menu $pm.xaxis -tearoff 0]
+$xam add radio -label "Lin" -variable loglinX -value "no" -command {changeLogLinX}
+$xam add radio -label "Log" -variable loglinX -value "yes" -command {changeLogLinX}
+
+set yam [menu $pm.yaxis -tearoff 0]
+$yam add radio -label "Lin" -variable loglinY -value "no" -command {changeLogLinY}
+$yam add radio -label "Log" -variable loglinY -value "yes" -command {changeLogLinY}
+
+set ptm [menu $pm.type -tearoff 0]
+$ptm add radio  -label "Counts" -variable plotType -value "count" -command {foreach elem [$graph element show] { changePlotType $elem  }}
+$ptm add radio -label "Count Rate" -variable plotType -value "countrate" -command {foreach elem [$graph element show] { changePlotType $elem  }}
+$ptm add radio -label "Trans" -variable plotType -value "trans" -command {foreach elem [$graph element show] { changePlotType $elem  }}
+$ptm add radio -label "Mon" -variable plotType -value "mon" -command {foreach elem [$graph element show] { changePlotType $elem  }}
+
+#pack menubuttons into menu
+pack $mf.filemb -side left
+pack $mf.plotmb -side left
 
 # Create tree
 blt::tree create .tree
@@ -300,45 +328,45 @@ set pcf [frame .filter.pc]
 #Clear plot button
 button $pcf.filterReset -text "Clear Plot" -command {resetGraph}
 
-#Frame for radiobutton set to control plot type
-set ptf [frame .filter.pc.pt -borderwidth 1 -relief raised]
-radiobutton $ptf.c -text "Counts" -variable plotType -value "count" -command {foreach elem [$graph element show] { changePlotType $elem  }}
-radiobutton $ptf.cr -text "Count Rate" -variable plotType -value "countrate" -command {foreach elem [$graph element show] { changePlotType $elem  }}
-radiobutton $ptf.t -text "Trans" -variable plotType -value "trans" -command {foreach elem [$graph element show] { changePlotType $elem  }}
-radiobutton $ptf.m -text "Mon" -variable plotType -value "mon" -command {foreach elem [$graph element show] { changePlotType $elem  }}
-$ptf.c select
-pack $ptf.m -side right
-pack $ptf.t -side right
-pack $ptf.cr -side right
-pack $ptf.c -side right 
+##Frame for radiobutton set to control plot type
+#set ptf [frame .filter.pc.pt -borderwidth 1 -relief raised]
+#radiobutton $ptf.c -text "Counts" -variable plotType -value "count" -command {foreach elem [$graph element show] { changePlotType $elem  }}
+#radiobutton $ptf.cr -text "Count Rate" -variable plotType -value "countrate" -command {foreach elem [$graph element show] { changePlotType $elem  }}
+#radiobutton $ptf.t -text "Trans" -variable plotType -value "trans" -command {foreach elem [$graph element show] { changePlotType $elem  }}
+#radiobutton $ptf.m -text "Mon" -variable plotType -value "mon" -command {foreach elem [$graph element show] { changePlotType $elem  }}
+#$ptf.c select
+#pack $ptf.m -side right
+#pack $ptf.t -side right
+#pack $ptf.cr -side right
+#pack $ptf.c -side right 
 
-#Frame for y-axis log/lin choice
-set logfy [frame .filter.pc.logy -borderwidth 1 -relief raised]
-#Log/lin radiobutton set
-radiobutton $logfy.log -text "Log Y" -variable loglinY -value "yes" -command { changeLogLinY }
-radiobutton $logfy.lin -text "Lin Y" -variable loglinY -value "no" -command { changeLogLinY }
-$logfy.lin select
-pack $logfy.log -side right
-pack $logfy.lin -side right
+##Frame for y-axis log/lin choice
+#set logfy [frame .filter.pc.logy -borderwidth 1 -relief raised]
+##Log/lin radiobutton set
+#radiobutton $logfy.log -text "Log Y" -variable loglinY -value "yes" -command { changeLogLinY }
+#radiobutton $logfy.lin -text "Lin Y" -variable loglinY -value "no" -command { changeLogLinY }
+#$logfy.lin select
+#pack $logfy.log -side right
+#pack $logfy.lin -side right
 
-#Frame for y-axis log/lin choice
-set logfx [frame .filter.pc.logx -borderwidth 1 -relief raised]
-#Log/lin radiobutton set
-radiobutton $logfx.log -text "Log X" -variable loglinX -value "yes" -command { changeLogLinX }
-radiobutton $logfx.lin -text "Lin X" -variable loglinX -value "no" -command { changeLogLinX }
-$logfx.lin select
-pack $logfx.log -side right
-pack $logfx.lin -side right
+##Frame for y-axis log/lin choice
+#set logfx [frame .filter.pc.logx -borderwidth 1 -relief raised]
+##Log/lin radiobutton set
+#radiobutton $logfx.log -text "Log X" -variable loglinX -value "yes" -command { changeLogLinX }
+#radiobutton $logfx.lin -text "Lin X" -variable loglinX -value "no" -command { changeLogLinX }
+#$logfx.lin select
+#pack $logfx.log -side right
+#pack $logfx.lin -side right
 
 pack $pcf.filterReset -side right -padx 25
-pack $logfy -side right
-pack $logfx -side right
-pack $ptf -side right
+#pack $logfy -side right
+#pack $logfx -side right
+#pack $ptf -side right
 pack $pcf -side right
 
 
 # Pack  widgets
-pack .mb -side top -anchor w
+pack $mf -side top -anchor w
 pack .vp -fill both -expand true -anchor w
 pack .filter -side bottom -fill x -anchor sw
 
