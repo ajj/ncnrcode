@@ -277,6 +277,11 @@ $ptm add radio -label "Count Rate" -variable plotType -value "countrate" -comman
 $ptm add radio -label "Trans" -variable plotType -value "trans" -command {foreach elem [$graph element show] { changePlotType $elem  }}
 $ptm add radio -label "Mon" -variable plotType -value "mon" -command {foreach elem [$graph element show] { changePlotType $elem  }}
 
+#Set defaults
+set loglinX "no"
+set loglinY "no"
+set plotType "count"
+
 #pack menubuttons into menu
 pack $mf.filemb -side left
 pack $mf.plotmb -side left
