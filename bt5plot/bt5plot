@@ -2,10 +2,6 @@
 
 package require BLT
 
-# Set default directory
-
-set defdir [pwd] 
-
 set images(normal) [image create photo -format gif -data {
     R0lGODlhEAANAMIAAAAAAH9/f///////AL+/vwAA/wAAAAAAACH5BAEAAAUALAAAAAAQAA0A
     AAM1WBrM+rAEMigJ8c3Kb3OSII6kGABhp1JnaK1VGwjwKwtvHqNzzd263M3H4n2OH1QBwGw6
@@ -32,6 +28,7 @@ proc loadBT5File  {fileName x c cr t m} {
 	set det4(0) 0
 	set det5(0) 0
 	set xvar(0) 0
+	set trans(0) 0
 
 	if [catch {open $fileName r} fileId] {
 
@@ -86,7 +83,7 @@ proc resetGraph { } {
 		set transvec [join "$elem _transvec" ""]
 		set monvec [join "$elem _monvec" ""]
 	
-		global $xvec $countvec $transvec $monvec
+		global $xvec $countvec $countratevec $transvec $monvec
 	
 		blt::vector destroy $xvec
 		blt::vector destroy $countratevec
@@ -122,7 +119,7 @@ proc addremovePlot { nodeID } {
 		set transvec [join "$filebase _transvec" ""]
 		set monvec [join "$filebase _monvec" ""]
 	
-		global $xvec $countvec $transvec $monvec
+		global $xvec $countvec $countratevec $transvec $monvec
 	
 		blt::vector create $xvec
 		blt::vector create $countratevec
@@ -169,12 +166,10 @@ proc addremovePlot { nodeID } {
 
 
 proc LoadTree { tree parentNode dir } {
-	set saved [pwd]
 	cd $dir
 	foreach f [lsort [glob *.bt5]] {
 		set e [$tree insert $parentNode -label $f -data "Plot 0"]
 	}
-	cd $saved
 }
 
 proc EmptyTree { tree } {
@@ -184,31 +179,28 @@ proc EmptyTree { tree } {
 proc selectDirectory {} {
 	
 	global .tree 
-	global defdir
 	
 	set dir [tk_chooseDirectory -title "Set Data Directory"]
 
 	if {$dir ne ""} {
 		EmptyTree .tree
 		LoadTree .tree 0 $dir
-		set defdir $dir	
+		cd $dir
 	}	
 }
 
 proc resetTree { } {
 
 	global .tree
-	global defdir
 
 	EmptyTree .tree
-	LoadTree .tree 0 $defdir
+	LoadTree .tree 0 [pwd]
 }
 
 
 proc filterTree { filterString } {
 	
 	global .tree
-	global defdir
 
 	resetTree
 	
@@ -230,7 +222,7 @@ $m add command -label "Set Data Dir" -command selectDirectory
 
 # Create tree
 blt::tree create .tree
-LoadTree .tree 0 $defdir 
+catch { LoadTree .tree 0 [pwd] } result
 
 # Create view+plot frame
 frame .vp
