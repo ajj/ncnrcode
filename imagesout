@@ -1,0 +1,16 @@
+#!/usr/bin/wish
+
+set images(normal) [image create photo -format gif -data {
+    R0lGODlhEAANAMIAAAAAAH9/f///////AL+/vwAA/wAAAAAAACH5BAEAAAUALAAAAAAQAA0A
+    AAM1WBrM+rAEMigJ8c3Kb3OSII6kGABhp1JnaK1VGwjwKwtvHqNzzd263M3H4n2OH1QBwGw6
+    nQkAOw==
+} ]
+
+set images(active) [image create photo -format gif -data {
+    R0lGODlhEAANAMIAAAAAAH9/f/////+/AL+/vwAA/wAAAAAAACH5BAEAAAUALAAAAAAQAA0A
+    AAM8WBrM+rAEQWmIb5KxiWjNInCkV32AJHRlGQBgDA7vdN4vUa8tC78qlrCWmvRKsJTquHkp
+    ZTKAsiCtWq0JADs=
+} ]
+
+$images(normal) write "normal.gif"
+$images(active) write "active.gif"
