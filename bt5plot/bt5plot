@@ -2,16 +2,32 @@
 
 package require BLT
 
+#set images(normal) [image create photo -format gif -data {
+#    R0lGODlhEAANAMIAAAAAAH9/f///////AL+/vwAA/wAAAAAAACH5BAEAAAUALAAAAAAQAA0A
+#    AAM1WBrM+rAEMigJ8c3Kb3OSII6kGABhp1JnaK1VGwjwKwtvHqNzzd263M3H4n2OH1QBwGw6
+#    nQkAOw==
+#} ]
+
+#Red dot image
 set images(normal) [image create photo -format gif -data {
-    R0lGODlhEAANAMIAAAAAAH9/f///////AL+/vwAA/wAAAAAAACH5BAEAAAUALAAAAAAQAA0A
-    AAM1WBrM+rAEMigJ8c3Kb3OSII6kGABhp1JnaK1VGwjwKwtvHqNzzd263M3H4n2OH1QBwGw6
-    nQkAOw==
+    R0lGODlhEAANAMQAAP8AAP8DA/8GBv8JCf8MDP8YGP8bG/9ISP9LS/9OTv9RUf9UVP9aWv9gYP9j
+    Y/91df97e/+EhP+Hh/+urv+xsf+6uv/AwP/Gxv/Jyf/S0v/29v/5+f/8/P///wAAAAAAACH5BAEA
+    AB0ALAAAAAAQAA0AAAVHYCeK0yEAQ1KNrLYAcAw0G9u9suywVO5bI4QvxxgNhjKDSIOUCUaEJkwp
+    OkgBRdEl0BRkWI+mxLaBcJ0Rjk2EURQAhsV3FAIAOw==
 } ]
 
+#set images(active) [image create photo -format gif -data {
+#    R0lGODlhEAANAMIAAAAAAH9/f/////+/AL+/vwAA/wAAAAAAACH5BAEAAAUALAAAAAAQAA0A
+#    AAM8WBrM+rAEQWmIb5KxiWjNInCkV32AJHRlGQBgDA7vdN4vUa8tC78qlrCWmvRKsJTquHkp
+#    ZTKAsiCtWq0JADs=
+#} ]
+
+#Green dot image
 set images(active) [image create photo -format gif -data {
-    R0lGODlhEAANAMIAAAAAAH9/f/////+/AL+/vwAA/wAAAAAAACH5BAEAAAUALAAAAAAQAA0A
-    AAM8WBrM+rAEQWmIb5KxiWjNInCkV32AJHRlGQBgDA7vdN4vUa8tC78qlrCWmvRKsJTquHkp
-    ZTKAsiCtWq0JADs=
+   R0lGODlhEAANAMQAAAD/AAP/Awb/Bgn/CQz/DBj/GBv/G0j/SEv/S07/TlH/UVT/VFr/WmD/YGP/
+   Y3X/dXv/e4T/hIf/h67/rrH/sbr/usD/wMb/xsn/ydL/0vb/9vn/+fz//P///wAAAAAAACH5BAEA
+   AB0ALAAAAAAQAA0AAAVHYCeK0yEAQ1KNrLYAcAw0G9u9suywVO5bI4QvxxgNhjKDSIOUCUaEJkwp
+   OkgBRdEl0BRkWI+mxLaBcJ0Rjk2EURQAhsV3FAIAOw==
 } ]
 
 proc loadBT5File  {fileName x c cr t m} {
