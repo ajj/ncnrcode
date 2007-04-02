@@ -1,0 +1,23 @@
+#!/usr/bin/wish
+
+package require Tk
+package require Expect
+
+spawn "/usr/local/icp/bin/icp"
+set icp $spawn_id
+
+text .icp -relief sunken -bd 1
+pack .icp
+
+expect_background{
+	-i $icp -re "\[^\x0d]+" {
+		.icp insert end $expect_out(0,string)
+		.icp yview -pickplace insert
+	}
+	-i $any_spawn_id "\x0d" {
+		#discard \r
+	}
+}
+
+bind Text <Any-Enter> {focus %W}
+bind .icp <Any-Keypress> {exp_send -i $icp "%A"}

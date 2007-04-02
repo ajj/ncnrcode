@@ -1,0 +1,29 @@
+#!/usr/bin/expectk
+
+#log_user 0
+eval spawn -noecho "/usr/local/icp/bin/icp"
+set icpid $spawn_id
+#canvas .icp -relief sunken -bd 1 -width 600
+#set icptext [.icp create text 0 0 -anchor w -font Fixed -width 0]
+text .icp
+entry .input -relief sunken -bd 1
+button .howlongbut -text "Howlong i1-6" -command {exp_send -i $icpid "howlong i1-6\r"}
+
+pack .icp -fill x -anchor nw -expand true
+pack .input -fill x
+pack .howlongbut 
+
+
+expect_background {
+        -i $icpid -re "\[^\x0d]+" {
+                #.icp insert $icptext end $expect_out(0,string)
+                .icp insert end $expect_out(0,string)
+        }
+        -i $any_spawn_id "\x0d" {
+        }
+        -i $any_spawn_id "exit" { exit 0 }
+}
+
+foreach event {<KeyPress> <<PasteSelection>>} {bind .icp $event break}
+bind .input <Any-Enter> {focus %W}
+bind .input <Key-Return> {exp_send -i $icpid [ .input get]; exp_send -i $icpid "\r"; .input delete 0 end }

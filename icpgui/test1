@@ -1,0 +1,21 @@
+#!/usr/bin/expectk
+
+#log_user 0
+eval spawn -noecho "/usr/local/icp/bin/icp"
+set icpid $spawn_id
+text .icp -relief sunken -bd 1 
+entry .input -relief sunken -bd 1
+pack .icp
+pack .input -fill x
+
+expect_background {
+        -i $icpid -re "\[^\x0d]+" {
+                .icp insert end $expect_out(0,string)
+        }
+        -i $any_spawn_id "\x0d" {
+        }
+        -i $any_spawn_id "exit" { exit 0 }
+}
+
+bind Text <Any-Enter> {focus %W}
+bind .input <Key-Return> {exp_send -i $icpid [ .input get]; exp_send -i $icpid "\r"; .input delete 0 end }
