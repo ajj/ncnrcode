@@ -1,0 +1,9 @@
+#!/usr/bin/expectk
+
+
+#Start up ICP
+#log user 0
+eval spawn -noecho "/usr/local/icp/bin/icp"
+set icpid $spawn_id
+
+
