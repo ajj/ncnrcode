@@ -1,9 +1,47 @@
 #!/usr/bin/expectk
 
+##################################
+## Talk to tilt controller on bt5
+##
+## Andrew Jackson, April 2007
+##################################
 
-#Start up ICP
-#log user 0
-eval spawn -noecho "/usr/local/icp/bin/icp"
-set icpid $spawn_id
+proc exec_cmd {cmd_text} {
+
+	.mf.output insert end "$cmd_text\n"
+	exp_send "$cmd_text\r"
+
+}
 
 
+set port /dev/ttyS0
+set serialid [spawn -noecho -open [open $port w+]]
+set baud 19200
+#stty ispeed $baud ospeed $baud -raw cs8 -parenb -cstopb < $port
+stty -F $port ispeed $baud ospeed $baud raw icrnl
+
+
+frame .mf
+text .mf.output
+entry .mf.cmdentry
+button .mf.ver_but -text "Execute Command" -command { exec_cmd [.mf.cmdentry get] }
+button .mf.init -text "Init" -command {exp_send "\r"}
+pack .mf.output -fill both -anchor nw -expand true
+pack .mf.cmdentry -side left
+pack .mf.ver_but .mf.init -side left
+pack .mf
+
+#expect ">"
+#exp_send "VER\r"
+#expect ">" {.mf.output insert end $expect_out(buffer)}
+
+expect_background {
+	-re ">" {
+		.mf.output insert end $expect_out(buffer)
+	}
+	-re "\\?" {
+		.mf.output insert end $expect_out(buffer)
+	}
+}		
+
+exp_send "\r"
