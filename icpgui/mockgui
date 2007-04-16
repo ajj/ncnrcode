@@ -1,0 +1,146 @@
+#!/usr/bin/wish
+
+package require Tix
+
+proc addSampleToList { } {
+	global lf
+	global sf
+
+	set lbox [$lf.slist subwidget listbox]
+
+	set sstring [binary format A5 [$sf.prefix get]]
+	append sstring " "
+	append sstring [binary format A20 [$sf.comment get]]
+	append sstring " "
+	append sstring [format "%6.2g " [$sf.qstart get]]
+	append sstring [format "%6.2g " [$sf.qend get]]
+	append sstring [$sf.qend get]
+
+	$lbox insert end $sstring
+	$lbox selection clear 0 end
+	$lbox selection set end
+}
+
+proc removeSampleFromList { } {
+	global lf
+	
+	set lbox [$lf.slist subwidget listbox]
+
+	set cursample [$lbox curselection]
+
+	foreach sample $cursample {	
+		$lbox delete $sample
+	}
+
+	$lbox selection clear 0 end
+	if {$cursample < [$lbox index end]} {
+		$lbox selection set $cursample
+	} else {
+		$lbox selection set end
+	}
+}
+
+proc moveSampleUpList { } {
+	global lf
+
+	set lbox [$lf.slist subwidget listbox]
+
+	set cursample [$lbox curselection]
+	
+	foreach sample $cursample {
+		set sval [$lbox get $sample]
+		$lbox delete $sample
+		if {$sample == 0} {
+			$lbox insert 0 $sval
+			$lbox selection clear 0 end
+			$lbox selection set 0
+		} else {
+			$lbox insert [ expr $sample - 1] $sval
+			$lbox selection clear 0 end
+			$lbox selection set [expr $sample - 1]
+		}
+	}
+
+}
+
+proc moveSampleDownList { } {
+	global lf
+
+	set lbox [$lf.slist subwidget listbox]
+
+	set cursample [$lbox curselection]
+	
+	foreach sample $cursample {
+		set sval [$lbox get $sample]
+		$lbox delete $sample
+		if {$sample > [$lbox index end]} {
+			$lbox insert end $sval
+			$lbox selection clear 0 end
+			$lbox selection set end
+		} else {
+			$lbox insert [ expr $sample + 1] $sval
+			$lbox selection clear 0 end
+			$lbox selection set [expr $sample + 1]
+		}
+	}
+
+}
+
+#Build GUI
+frame .fmain
+set controlstrip [frame .fmain.fcontrolstrip]
+
+#Populate controlstrip
+pack [button $controlstrip.run_b -text "Run Experiment"] -fill none -side left
+pack [button $controlstrip.pause_b -text "Pause Experiment"] -fill none -side left
+pack [button $controlstrip.stop_b -text "Stop Experiment"] -fill none -side left
+pack [button $controlstrip.abort_b -text "Abort Experiment"] -fill none -side left
+
+#Create Notebook tabs
+set nb [tixNoteBook .fmain.noteb]
+$nb add samples -label "Samples" -underline 0
+$nb add buffers -label "Buffers" -underline 0
+$nb add icp -label "ICP" -underline 0
+#Get frames for each tab
+set sampletab [frame [$nb subwidget samples].f]
+set buffertab [frame [$nb subwidget buffers].f]
+set icptab [frame [$nb subwidget icp].f]
+
+
+#Populate samples tab
+set sf [frame $sampletab.sframe -background grey -padx 2 -pady 2]
+
+pack [label $sf.plabel -text "Prefix" -background grey] -side left -anchor n
+pack [entry $sf.prefix -width 5 -background grey] -side left -anchor n
+pack [label $sf.pcomment -text "Comment" -background grey] -side left -anchor n
+pack [entry $sf.comment -background grey] -side left -anchor n
+pack [label $sf.pqstart -text "Q Start" -background grey] -side left -anchor n
+pack [entry $sf.qstart -width 5 -background grey] -side left -anchor n
+pack [label $sf.pqend -text "Q End" -background grey] -side left -anchor n
+pack [entry $sf.qend -width 5 -background grey] -side left -anchor n
+pack [label $sf.pctime -text "Run Time" -background grey] -side left -anchor n
+pack [entry $sf.counttime -width 8 -background grey] -side left -anchor n
+pack $sf -fill x
+
+###
+set bf [frame $sampletab.bframe -background grey]
+pack [button $bf.add_b -text "Add Sample" -command {addSampleToList} ] -expand true -fill x -side left
+pack [button $bf.del_b -text "Remove Sample" -command {removeSampleFromList} ] -expand true -fill x -side left
+pack [button $bf.up_b -text "Move Sample Up" -command {moveSampleUpList}] -fill x -side left 
+pack [button $bf.down_b -text "Move Sample Down" -command {moveSampleDownList}] -fill x -side left
+
+pack $bf -fill x
+
+###
+set lf [frame $sampletab.lframe]
+
+pack [tixScrolledListBox $lf.slist] -expand true -fill both -side left -anchor w
+$lf.slist subwidget listbox configure -background grey
+pack $lf -expand true -fill both
+
+#Populate icp tab
+pack [text $icptab.icp] -fill both
+
+pack .fmain -expand true -fill both -anchor nw
+pack $nb $sampletab $buffertab $icptab -expand true -fill both -anchor nw
+pack $controlstrip
