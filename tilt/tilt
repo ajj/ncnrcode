@@ -6,14 +6,26 @@
 ## Andrew Jackson, April 2007
 ##################################
 
-proc exec_cmd {cmd_text} {
+package require Tix
 
-	.mf.output insert end "$cmd_text\n"
+proc exec_cmd {cmd_text} {
+	global tf
+
+	$tf.output insert end "$cmd_text\n"
 	exp_send "$cmd_text\r"
 
 }
 
 
+proc goButProc {changeVal} {
+	global tf
+
+	$tf.output insert end "REL A1 $changeVal G\n"
+	exp_send "REL A1 $changeVal G\r"
+
+}
+
+log_user 0
 set port /dev/ttyS0
 set serialid [spawn -noecho -open [open $port w+]]
 set baud 19200
@@ -21,26 +33,49 @@ set baud 19200
 stty -F $port ispeed $baud ospeed $baud raw icrnl
 
 
-frame .mf
-text .mf.output
-entry .mf.cmdentry
-button .mf.ver_but -text "Execute Command" -command { exec_cmd [.mf.cmdentry get] }
-button .mf.init -text "Init" -command {exp_send "\r"}
-pack .mf.output -fill both -anchor nw -expand true
-pack .mf.cmdentry -side left
-pack .mf.ver_but .mf.init -side left
-pack .mf
+#Build GUI
+#Create main frame
+frame .fmain
 
-#expect ">"
-#exp_send "VER\r"
-#expect ">" {.mf.output insert end $expect_out(buffer)}
+#Create Notebook tabs
+set nb  [tixNoteBook .fmain.noteb]
+$nb add simple -label "Tilt Adjust" -underline 0
+$nb add tiltterm -label "Command line" -underline 0
+#Get frames for each tab
+set simpletab [frame [$nb subwidget simple].f]
+set termtab [frame [$nb subwidget tiltterm].f]
+
+
+#Populate simple tab
+set sf [frame $simpletab.sframe -background grey]
+
+pack [tixLabelEntry $sf.motorval -label "Number of clicks"] -padx 10 -pady 10
+pack [button $sf.gobut -text "Change Tilt"\
+	 -command {goButProc [ [$sf.motorval subwidget entry] get] } ]\
+	 -padx 10 -pady 10 -anchor s
+pack $sf -fill both -expand true
+
+#Populate term tab
+set tf [frame $termtab.tframe]
+
+pack [text $tf.output] -fill both -anchor nw -expand true
+pack [entry $tf.cmdentry] -side left -fill x -expand true -anchor w
+pack [button $tf.verbut -text "Execute Command"\
+	 -command { exec_cmd [$tf.cmdentry get] } ]\
+		 -side right 
+
+pack $tf -fill x
+
+#Pack up and go
+pack $nb $simpletab $termtab -fill both -expand true
+pack .fmain -fill both -expand true -anchor nw
 
 expect_background {
 	-re ">" {
-		.mf.output insert end $expect_out(buffer)
+		$tf.output insert end $expect_out(buffer)
 	}
 	-re "\\?" {
-		.mf.output insert end $expect_out(buffer)
+		$tf.output insert end $expect_out(buffer)
 	}
 }		
 
