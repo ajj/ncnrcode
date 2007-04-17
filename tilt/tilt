@@ -70,6 +70,24 @@ pack $tf -fill x
 pack $nb $simpletab $termtab -fill both -expand true
 pack .fmain -fill both -expand true -anchor nw
 
+exp_send "\r"
+expect -re ">" { $tf.output insert end $expect_out(buffer)
+		exec_cmd "VER" 
+		}
+expect -re ">" { $tf.output insert end $expect_out(buffer)
+		 exec_cmd "CHL A1=0" 
+		}
+expect -re ">" { $tf.output insert end $expect_out(buffer)
+		exec_cmd "VEL A1 0=100" 
+		}
+expect -re ">" { $tf.output insert end $expect_out(buffer)
+		exec_cmd "VEL A1 0" 
+		}
+expect -re ">" { $tf.output insert end $expect_out(buffer)
+		exec_cmd "ACC A1 0" 
+		}
+expect -re ">" { $tf.output insert end $expect_out(buffer) }
+
 expect_background {
 	-re ">" {
 		$tf.output insert end $expect_out(buffer)
@@ -78,5 +96,3 @@ expect_background {
 		$tf.output insert end $expect_out(buffer)
 	}
 }		
-
-exp_send "\r"
