@@ -1,6 +1,7 @@
 #!/usr/bin/wish
 
 package require BLT
+package require Tix
 
 #set images(normal) [image create photo -format gif -data {
 #    R0lGODlhEAANAMIAAAAAAH9/f///////AL+/vwAA/wAAAAAAACH5BAEAAAUALAAAAAAQAA0A
@@ -332,7 +333,19 @@ pack $tvf.yscroll -side right -fill y
 pack $tvf.t -side left -fill both -expand true
 pack $tvf -side left -fill y -anchor w
 
+# Create Notebook
+#set nb [tixNoteBook .vp.nb]
+#$nb add plot -label "Plot" -underline 0
+#$nb add data -label "File Data" -underline 0
+#set plottab [frame [$nb subwidget plot].f]
+#set datatab [frame [$nb subwidget data].f]
+#pack $nb $plottab $datatab -fill both -expand true 
+
+# Create File Details Tab
+
+
 # Create graph
+#set graph [blt::graph $plottab.g]
 set graph [blt::graph .vp.g]
 pack $graph -fill both -expand true -side left -anchor w
 
@@ -342,51 +355,15 @@ label .filter.filterLabel -text "Filter: "
 entry .filter.filterEntry
 bind .filter.filterEntry <Return> {filterTree [%W get]}
 
-#button .filter.filterButton -text "Filter" -command {filterTree [.filter.filterEntry get]} 
 pack .filter.filterLabel -side left
 pack .filter.filterEntry -side left 
-#pack .filter.filterButton -side left
-#pack .filter.filterReset -side right -padx 25
 
 #Plot controls
 set pcf [frame .filter.pc]
 #Clear plot button
 button $pcf.filterReset -text "Clear Plot" -command {resetGraph}
 
-##Frame for radiobutton set to control plot type
-#set ptf [frame .filter.pc.pt -borderwidth 1 -relief raised]
-#radiobutton $ptf.c -text "Counts" -variable plotType -value "count" -command {foreach elem [$graph element show] { changePlotType $elem  }}
-#radiobutton $ptf.cr -text "Count Rate" -variable plotType -value "countrate" -command {foreach elem [$graph element show] { changePlotType $elem  }}
-#radiobutton $ptf.t -text "Trans" -variable plotType -value "trans" -command {foreach elem [$graph element show] { changePlotType $elem  }}
-#radiobutton $ptf.m -text "Mon" -variable plotType -value "mon" -command {foreach elem [$graph element show] { changePlotType $elem  }}
-#$ptf.c select
-#pack $ptf.m -side right
-#pack $ptf.t -side right
-#pack $ptf.cr -side right
-#pack $ptf.c -side right 
-
-##Frame for y-axis log/lin choice
-#set logfy [frame .filter.pc.logy -borderwidth 1 -relief raised]
-##Log/lin radiobutton set
-#radiobutton $logfy.log -text "Log Y" -variable loglinY -value "yes" -command { changeLogLinY }
-#radiobutton $logfy.lin -text "Lin Y" -variable loglinY -value "no" -command { changeLogLinY }
-#$logfy.lin select
-#pack $logfy.log -side right
-#pack $logfy.lin -side right
-
-##Frame for y-axis log/lin choice
-#set logfx [frame .filter.pc.logx -borderwidth 1 -relief raised]
-##Log/lin radiobutton set
-#radiobutton $logfx.log -text "Log X" -variable loglinX -value "yes" -command { changeLogLinX }
-#radiobutton $logfx.lin -text "Lin X" -variable loglinX -value "no" -command { changeLogLinX }
-#$logfx.lin select
-#pack $logfx.log -side right
-#pack $logfx.lin -side right
-
 pack $pcf.filterReset -side right -padx 25
-#pack $logfy -side right
-#pack $logfx -side right
-#pack $ptf -side right
 pack $pcf -side right
 
 
