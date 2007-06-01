@@ -292,6 +292,8 @@ proc ConfigCruft { } {
 	    set config(ibuf_mots)  { 1 2 3 4 5 6 }
 	    set config(pola_state) disabled
 	    set config(mono_list)  {Si220}
+	    set config(mode) 0
+	    set config(motlbls) {Monochromator Analyzer "Detector Slide" "Analyzer Table" Sample Unused} 
 	}
 	7 {
 	    set config(default_buf) increment
@@ -512,13 +514,25 @@ proc IBufEntryCreate { parent } {
     }
     set row 1
     foreach i $config(ibuf_mots) {
+	if { $config(nsta) == 5 } {
+	set motname [lindex $config(motlbls) [expr $i-1]]
+	label $parent.a${i}beglabel -text "$motname (A${i}) Beg:"
+	entry $parent.a${i}beg -width $width -textvariable ibufdisp(a${i}beg)
+	label $parent.a${i}inclabel -text "Inc:"
+	entry $parent.a${i}inc -width $width -textvariable ibufdisp(a${i}inc)
+	label $parent.a${i}endlabel -text "End:"
+	entry $parent.a${i}end -width $width -textvariable ibufdisp(a${i}end)
+	
+
+	} else {
 	label $parent.a${i}beglabel -text "A${i}-beg:"
 	entry $parent.a${i}beg -width $width -textvariable ibufdisp(a${i}beg)
 	label $parent.a${i}inclabel -text "Inc-A${i}:"
 	entry $parent.a${i}inc -width $width -textvariable ibufdisp(a${i}inc)
 	label $parent.a${i}endlabel -text "A${i}-end:"
 	entry $parent.a${i}end -width $width -textvariable ibufdisp(a${i}end)
-        if $text_only {
+	} 
+       if $text_only {
            grid $parent.a${i}beglabel -row $row -column 1 -ipadx 1 -sticky w
            grid $parent.a${i}beg -row $row -column 2 -ipadx 1 -sticky w
            grid $parent.a${i}inclabel -row $row -column 3 -ipadx 1 -sticky w
@@ -526,7 +540,7 @@ proc IBufEntryCreate { parent } {
            grid $parent.a${i}endlabel -row $row -column 5 -ipadx 1 -sticky w
            grid $parent.a${i}end -row $row -column 6 -ipadx 1 -sticky w
         } else {
-           grid $parent.a${i}beglabel -row $row -column 1
+           grid $parent.a${i}beglabel -row $row -column 1 -sticky e
            grid $parent.a${i}beg -row $row -column 2
            grid $parent.a${i}inclabel -row $row -column 3
            grid $parent.a${i}inc -row $row -column 4
@@ -706,6 +720,18 @@ proc IBufEntryMod { } {
 	$parent.pts.label config -fg $color
 	$parent.pts.val config -state $state -fg $color
     }
+    if { $config(nsta) == 5} {
+	foreach i {1 3 4 6} {
+	    foreach l "a${i}beglabel a${i}inclabel a${i}endlabel" {
+		$parent.$l config -fg $color
+	    }
+	    foreach e "a${i}beg a${i}inc a${i}end" {
+		$parent.$e config -state $state -fg $color
+	    }
+	} 
+	$parent.pts.label config -fg $color
+	$parent.pts.val config -state $state -fg $color
+    }
     foreach l {t.itlabel t.hldlabel} {
 	$parent.$l config -fg $color
     }
@@ -861,12 +887,16 @@ proc IBufInit { } {
 }
 
 proc IBufList { } {
-    global text_only
+    global text_only config
     # Clear out our list if it contains anything.
     set lbox .l.list
     set start [expr int([lindex [$lbox yview] 0] * [$lbox index end])]
     $lbox delete 0 end
-    $lbox configure -font {-family courier -size 12}
+    if { $config(nsta) == 5} { 
+	$lbox configure -font {-family courier -size 12} 
+    } else {    
+	$lbox configure -font fixed
+    }
     for {set i 0} {$i < 30} {incr i} {
 	$lbox insert end [IBufFormatRec $i]
     }
@@ -882,7 +912,10 @@ proc IBufList { } {
 }
 
 proc IBufFormatRec { recno } {
-    global ibuf
+    global ibuf config
+
+    if { $config(nsta) == 5 } {
+
     set output [format "%-3d " [expr $recno + 1]]
     append output [binary format A20 $ibuf($recno,comment)]
     append output [format " %8.2f"  $ibuf($recno,a2beg)]
@@ -897,6 +930,20 @@ proc IBufFormatRec { recno } {
     append output [format "%6.1f"   $ibuf($recno,t0)]
     append output [format "%4.0f"   $ibuf($recno,th0)]
  
+    } else {
+
+    set output [format "%2d " [expr $recno + 1]]
+    append output [binary format A20 $ibuf($recno,comment)]
+    append output [format " %6.2f "  $ibuf($recno,a4beg)]
+    append output [format "%6.2f "   $ibuf($recno,a4end)]
+    append output [format "%5.2f "   $ibuf($recno,a4inc)]
+    append output [format "%2.0f\* " $ibuf($recno,mpf)]
+    append output [format "%6.0f "   $ibuf($recno,mon)]
+    append output [binary format A4  $ibuf($recno,mt)]
+    append output [format " %6.1f"   $ibuf($recno,t0)]
+    append output [format "%4.0f "   $ibuf($recno,th0)]
+ 
+    }
     return $output
 }
 
@@ -5429,12 +5476,17 @@ proc SequenceLowerCommand { } {
 #=Switch buffers===============================================================
 
 proc SwitchBuf { which } {
-    global mode changed
+    global mode changed config
     switch $which {
 	increment {
+	   if { $config(nsta) == 5 } {
 	    .l.title configure -text \
 		    "#  Comment *I-Buf*         A2-beg  A2-end  A2-Inc  A5-beg  A5-end  A5-Inc Monitor         Temp  Hold"\
 		    -font {-family courier -size 11}
+	    } else {
+	    .l.title configure -text \
+		    "No Comment *I-Buffer*   A4-beg A4-end  Inc    Monitor        Temp Hold"
+            }
 	    IBufReadFile ;# Make sure we get the latest data from disk
 	    IBufList
 	    notebook_display .e ibuf
