@@ -293,7 +293,7 @@ proc ConfigCruft { } {
 	    set config(pola_state) disabled
 	    set config(mono_list)  {Si220}
 	    set config(mode) 0
-	    set config(motlbls) {Monochromator Analyzer "Detector Slide" "Analyzer Table" Sample Unused} 
+	    set config(motlbls) {Monochromator Analyzer  "Analyzer Table" "Detector Slide" Sample Unused} 
 	}
 	7 {
 	    set config(default_buf) increment
@@ -729,8 +729,6 @@ proc IBufEntryMod { } {
 		$parent.$e config -state $state -fg $color
 	    }
 	} 
-	$parent.pts.label config -fg $color
-	$parent.pts.val config -state $state -fg $color
     }
     foreach l {t.itlabel t.hldlabel} {
 	$parent.$l config -fg $color
