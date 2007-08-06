@@ -1,0 +1,87 @@
+23a24,25
+> #	      May  2006 Change contents of I-Buffer list to show relevant
+> #                       motors for BT5 - AJJ
+294a297,298
+> 	    set config(mode) 0
+> 	    set config(motlbls) {Monochromator Analyzer  "Analyzer Table" "Detector Slide" Sample Unused} 
+523a528,538
+> 	if { $config(nsta) == 5 } {
+> 	set motname [lindex $config(motlbls) [expr $i-1]]
+> 	label $parent.a${i}beglabel -text "$motname (A${i}) Beg:"
+> 	entry $parent.a${i}beg -width $width -textvariable ibufdisp(a${i}beg)
+> 	label $parent.a${i}inclabel -text "Inc:"
+> 	entry $parent.a${i}inc -width $width -textvariable ibufdisp(a${i}inc)
+> 	label $parent.a${i}endlabel -text "End:"
+> 	entry $parent.a${i}end -width $width -textvariable ibufdisp(a${i}end)
+> 	
+> 
+> 	} else {
+530c545,546
+<         if $text_only {
+---
+> 	} 
+>        if $text_only {
+538c554
+<            grid $parent.a${i}beglabel -row $row -column 1
+---
+>            grid $parent.a${i}beglabel -row $row -column 1 -sticky e
+720a737,746
+>     if { $config(nsta) == 5} {
+> 	foreach i {1 3 4 6} {
+> 	    foreach l "a${i}beglabel a${i}inclabel a${i}endlabel" {
+> 		$parent.$l config -fg $color
+> 	    }
+> 	    foreach e "a${i}beg a${i}inc a${i}end" {
+> 		$parent.$e config -state $state -fg $color
+> 	    }
+> 	} 
+>     }
+876c902
+<     global text_only
+---
+>     global text_only config
+881c907,911
+<     #$lbox configure -font fixed
+---
+>     if { $config(nsta) == 5} { 
+> 	$lbox configure -font {-family courier -size 12} 
+>     } else {    
+> 	$lbox configure -font fixed
+>     }
+897c927,946
+<     global ibuf
+---
+>     global ibuf config
+> 
+>     if { $config(nsta) == 5 } {
+> 
+>     set output [format "%-3d " [expr $recno + 1]]
+>     append output [binary format A20 $ibuf($recno,comment)]
+>     append output [format " %8.2f"  $ibuf($recno,a2beg)]
+>     append output [format "%8.2f"   $ibuf($recno,a2end)]
+>     append output [format "%8.2f"   $ibuf($recno,a2inc)]
+>     append output [format "%8.2f"  $ibuf($recno,a5beg)]
+>     append output [format "%8.2f"   $ibuf($recno,a5end)]
+>     append output [format "%8.2f"   $ibuf($recno,a5inc)]
+>     append output [format "%2.0f\* " $ibuf($recno,mpf)]
+>     append output [format "%6.0f "   $ibuf($recno,mon)]
+>     append output [binary format A4  $ibuf($recno,mt)]
+>     append output [format "%6.1f"   $ibuf($recno,t0)]
+>     append output [format "%4.0f"   $ibuf($recno,th0)]
+>  
+>     } else {
+> 
+908a958
+>     }
+5452c5502
+<     global mode changed
+---
+>     global mode changed config
+5454a5505,5509
+> 	   if { $config(nsta) == 5 } {
+> 	    .l.title configure -text \
+> 		    "#  Comment *I-Buf*         A2-beg  A2-end  A2-Inc  A5-beg  A5-end  A5-Inc Monitor         Temp  Hold"\
+> 		    -font {-family courier -size 11}
+> 	    } else {
+5456a5512
+>             }
