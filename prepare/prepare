@@ -19,9 +19,11 @@
 #             Mar  2003 Add support for diffraction buffers - NCM
 #             Mar  2004 Change packing of GUI to permit expansion of buf list
 #                       Fix buffer copy bug - KOD
+#             Mar  2006 Change range of increment scans for BT1 reflecting
+#                       changes to monochromators at instrument - NCM
 #	      May  2006 Change contents of I-Buffer list to show relevant
 #                       motors for BT5 - AJJ
-set version {$Id: prepare.tcl,v 1.47 2005/08/11 19:55:25 nickm Exp $}
+set version {$Id: prepare.tcl,v 1.53 2007/07/23 16:34:14 nickm Exp $}
 # set tcl_precision 12
 #set config(root) $env(HOME)
 set config(root) /usr/local/icp
@@ -240,7 +242,7 @@ proc ConfigCruft { } {
 	    set config(ibuf_mots)  { 3 4 }
 	    set config(pola_state) disabled
 	    set config(mode)       0 
-	    set config(mono_list)  {Ge311 Cu311 Si531}
+	    set config(mono_list)  {Ge311 Cu311 Ge733}
 	    set config(instr_list) {}
 
 	    foreach mon $config(mono_list) {
@@ -255,10 +257,10 @@ proc ConfigCruft { } {
 	    # Store monitor rates in cps
 	    set config(cps-Ge311-15') 2100
 	    set config(cps-Cu311-15') 1100
-	    set config(cps-Si531-15')  600
+	    set config(cps-Ge733-15')  600
 	    set config(cps-Ge311-7')  1050
 	    set config(cps-Cu311-7')   550
-	    set config(cps-Si531-7')   300
+	    set config(cps-Ge733-7')   300
 	    # Instrument scientist values for monitor rates
 	    if {[catch {source $config(root)/cfg/bt1-mrat.dat} errmsg]} {
 		puts "BT-1 mrat source error = $errmsg"
@@ -320,6 +322,7 @@ proc ConfigCruft { } {
 	    set config(pola_state) disabled
 	    set config(qbuf_state) normal
 	    set config(bbuf_state) normal
+	    set config(dbuf_state) normal
 	    set config(mono_list)  {Si111 PG002}
 	}
 	-1 {
@@ -345,6 +348,14 @@ proc ConfigCruft { } {
 	    set config(rbuf_state) normal
 	    set config(pola_state) disabled
 	    set config(mono_list)  {PG002}
+	}
+	-11 {
+	    set config(default_buf) increment
+	    set config(qbuf_state) disabled
+	    set config(bbuf_state) disabled
+	    set config(tbuf_state) disabled
+	    set config(rbuf_state) disabled
+	    set config(dbuf_state) normal
 	}
     }
 
@@ -436,8 +447,8 @@ proc ConfigBT1 { args } {
 
     # Get current instrument configuration
     switch -glob $monobt1 {
-	G* { set config(mono) Ge311 }
-	S* { set config(mono) Si311 }
+	GE311 { set config(mono) Ge311 }
+	GE733 { set config(mono) Ge733 }
 	default {
 	    set config(mono) Cu311
 	}
@@ -461,8 +472,8 @@ proc ConfigChange { args } {
     switch -- $config(nsta) {
 	1 {
 	    switch -glob $config(instr) {
-		Ge* { set config(mono) Ge311 }
-		Si* { set config(mono) Si531 }
+		G*311 { set config(mono) Ge311 }
+		G*733 { set config(mono) Ge733 }
 		default {
 		    set config(mono) Cu311
 		}
@@ -500,7 +511,7 @@ proc IBufEntryCreate { parent } {
 
     label $parent.bufnolabel -textvariable ibufdisp(label)
     label $parent.commentlabel -text "Comment:"
-    entry $parent.comment -width 35 -textvariable ibufdisp(comment)
+    entry $parent.comment -width 35 -textvariable ibufdisp(comment) 
     if $text_only {
        grid $parent.bufnolabel -row 0 -column 0 -sticky w
        grid $parent.commentlabel -row 0 -column 1 -ipadx 3 -sticky e
@@ -662,6 +673,9 @@ proc IBufEntryCreate { parent } {
 
     bind $parent.pts.val <Return>   IBufCalcAngles
     bind $parent.pts.val <FocusOut> IBufCalcAngles
+    bind $parent.comment <Return>   IBufCommentBinding
+    bind $parent.comment <FocusOut>   IBufCommentBinding
+    
 
     return $parent
 }
@@ -1033,7 +1047,7 @@ proc IBufFieldDialog { } {
     label .field.waitlab -text "Max Wait Per Point (secs) :"
     entry .field.initentry -textvariable ibufdisp(hf)  -width 10
     entry .field.increntry -textvariable ibufdisp(ihf) -width 10
-    entry .field.waitentry -textvariable ibufdisp(ihw) -width 10
+    entry .field.waitentry -textvariable ibufdisp(hfw) -width 10
     label .field.t1 -text "(Wait used in non-persistent mode on SC only)"
     label .field.t2 -text "(Reply 0 to get default optimum wait times)"
     button .field.dismiss -text "Dismiss" -command IBufFieldDialogDismiss
@@ -1238,6 +1252,14 @@ proc IBufAngleBinding { args } {
     return [IBufCalcAngles]
 }
 
+proc IBufCommentBinding { } {
+    global ibufdisp
+
+    if {[string length $ibufdisp(comment)] > 50} {
+	set ibufdisp(comment) [string range $ibufdisp(comment) 0 49]
+    }
+}
+
 # Special rules for BT1
 proc IBufCalcBT1 {} {
     global ibufdisp config
@@ -1247,10 +1269,10 @@ proc IBufCalcBT1 {} {
 	set vallist {0.    0.    0.    0.05  201  0  0}
 	if {$config(mono) == "Ge311"} {
 	    lappend varlist a4beg a4end
-	    lappend vallist 1.3   11.3
+	    lappend vallist 1.8   11.8
 	} else {
 	    lappend varlist a4beg a4end
-	    lappend vallist 3.0   13.0
+	    lappend vallist 2.8 12.8
 	}
 	if {$config(mode) == 0} {
 	    lappend varlist "t0"
@@ -1802,7 +1824,7 @@ proc QBufFieldDialog { } {
     label .field_q.waitlab -text "Max Wait Per Point (secs) :"
     entry .field_q.initentry -textvariable qbufdisp(hf)  -width 10
     entry .field_q.increntry -textvariable qbufdisp(ihf) -width 10
-    entry .field_q.waitentry -textvariable qbufdisp(ihw) -width 10
+    entry .field_q.waitentry -textvariable qbufdisp(hfw) -width 10
     label .field_q.t1 -text "(Wait used in non-persistent mode on SC only)"
     label .field_q.t2 -text "(Reply 0 to get default optimum wait times)"
     button .field_q.dismiss -text "Dismiss" -command QBufFieldDialogDismiss
@@ -2038,7 +2060,7 @@ proc BBufEntryCreate { p } {
     entry $p.temp.ter -textvariable bbufdisp(ter) -width 6
     label $p.temp.th0label -text "Hld0:"
     entry $p.temp.th0 -textvariable bbufdisp(th0) -width 6
-    button $p.temp.field -text FIELD -command QBufFieldDialog
+    button $p.temp.field -text FIELD -command BBufFieldDialog
     pack $p.temp.t0label $p.temp.t0 $p.temp.tinclabel $p.temp.tinc \
 	    $p.temp.twlabel $p.temp.tw $p.temp.terlabel $p.temp.ter \
 	    $p.temp.th0label $p.temp.th0 $p.temp.field -side left
@@ -2378,7 +2400,7 @@ proc BBufFieldDialog { } {
     label .field_b.waitlab -text "Max Wait Per Point (secs) :"
     entry .field_b.initentry -textvariable bbufdisp(hf)  -width 10
     entry .field_b.increntry -textvariable bbufdisp(ihf) -width 10
-    entry .field_b.waitentry -textvariable bbufdisp(ihw) -width 10
+    entry .field_b.waitentry -textvariable bbufdisp(hfw) -width 10
     label .field_b.t1 -text "(Wait used in non-persistent mode on SC only)"
     label .field_b.t2 -text "(Reply 0 to get default optimum wait times)"
     button .field_b.dismiss -text "Dismiss" -command BBufFieldDialogDismiss
@@ -4091,7 +4113,7 @@ proc DBufCalcAngles {{anglist {1 2 3 4 5 6}}} {
     set maxloop 1
     foreach i $anglist {
 	if [catch {expr $dbufdisp(lpn_$i) * 1} dbufdisp(lpn_$i)] {
-	    set dbufdisp(lpts_$i) "------"
+	    set dbufdisp(lpn_$i) 1
 	    return
 	}
 
@@ -4103,15 +4125,18 @@ proc DBufCalcAngles {{anglist {1 2 3 4 5 6}}} {
 	if {$dbufdisp(lpn_$i) < 1} { set dbufdisp(lpn_$i) 1 }
 	if {$dbufdisp(lpn_$i) > 6} { set dbufdisp(lpn_$i) 6 }
 	set iloop $dbufdisp(lpn_$i)
+	# Probably not good enough
+	if {$iloop > $maxloop} { set maxloop $iloop }
+	#
 	if { $ploop(pts_$iloop) == 0 } {
-	    set ploop(pts_$iloop) $dbufdisp(lpts_$i)
+	    set ploop(pts_$i) $dbufdisp(lpts_$i)
 	} else {
 	    set dbufdisp(lpts_$i) $ploop(pts_$iloop)
 	}
     }
 
     set pts 0
-    foreach i $anglist {
+    for {set i 1} {$i <= $maxloop} {incr i} {
 	if { $ploop(pts_$i) > 0 } {
 	    if {$pts == 0} { 
 		set pts $ploop(pts_$i)
