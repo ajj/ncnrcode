@@ -1,0 +1,183 @@
+#!/usr/bin/env python
+
+import sys
+import os
+import matplotlib
+matplotlib.use('GTK')
+
+from matplotlib.figure import Figure
+from matplotlib.axes import Subplot
+from matplotlib.backends.backend_gtk import FigureCanvasGTK, NavigationToolbar
+
+
+try:
+	import pygtk
+	pygtk.require("2.0")
+	
+except:
+	pass
+
+try:
+	import gtk
+	import gtk.glade
+except:
+	sys.exit(1)
+
+
+
+class appGui:
+	
+	TARGETS = [('STRING', gtk.TARGET_SAME_APP, 0)]
+	
+	def __init__(self):
+		
+		gladefile = "bt5view.glade"
+		self.windowname = "win_Main"
+		self.wTree = gtk.glade.XML(gladefile, self.windowname)
+
+		event_dic = {"on_win_Main_destroy" : gtk.main_quit,
+					 "on_quit1_activate" : gtk.main_quit,
+					 "on_set_data_dir1_activate" : self.setdatadir,
+					 "on_tv_plotlist_key_press_event" : self.handle_plotlist_keypress}
+
+		
+		self.wTree.signal_autoconnect(event_dic)
+
+		# Set up file list
+		self.filelistview = self.wTree.get_widget("tv_filelist")
+		self.AddFileListColumn("Filename",0)
+		
+		self.filelist = gtk.ListStore(str)
+		self.filelistview.set_model(self.filelist)
+
+		# Set up plot group list
+		self.plotlistview = self.wTree.get_widget("tv_plotlist")
+		self.AddPlotListColumn("Dataset",0)
+
+		self.plotlist = gtk.TreeStore(str)
+		self.plotlistview.set_model(self.plotlist)
+	
+		#fill the file list
+		self.FillFileList(self.GetDirList())
+		#self.plotlist.append(None,None)
+		
+		# Set up graphing widget to display xpeek data
+		self.figure = Figure(figsize=(4,4), dpi=72)
+		self.axis = self.figure.add_subplot(111)
+		self.axis.set_xlabel('Motor position')
+		self.axis.set_ylabel('Counts')
+		#self.axis.set_title('XPeek')
+		self.axis.grid(True)
+		
+		self.canvas = FigureCanvasGTK(self.figure)
+		self.canvas.show()
+		
+		self.plotView = self.wTree.get_widget("hbox1")
+		self.plotView.pack_start(self.canvas, True, True)	
+		
+		self.filelistview.enable_model_drag_source( gtk.gdk.BUTTON1_MASK,
+                                                  self.TARGETS,
+                                                   gtk.gdk.ACTION_COPY)
+		self.plotlistview.enable_model_drag_dest(self.TARGETS,
+                                               gtk.gdk.ACTION_COPY)
+
+		self.filelistview.connect("drag_data_get", self.dnd_data_getdata)
+		self.plotlistview.connect("drag_data_received",self.dnd_data_received)
+		
+		
+	def AddFileListColumn(self, title, columnId):
+		"""This function adds a column to the list view.
+		First it create the gtk.TreeViewColumn and then set
+		some needed properties"""
+						
+		column = gtk.TreeViewColumn(title, gtk.CellRendererText()
+			, text=columnId)
+		column.set_resizable(True)		
+		column.set_sort_column_id(columnId)
+		self.filelistview.append_column(column)
+		return
+		
+	def AddPlotListColumn(self, title, columnId):
+		"""This function adds a column to the list view.
+		First it create the gtk.TreeViewColumn and then set
+		some needed properties"""
+						
+		column = gtk.TreeViewColumn(title, gtk.CellRendererText()
+			, text=columnId)
+		column.set_resizable(True)		
+		column.set_sort_column_id(columnId)
+		self.plotlistview.append_column(column)
+		return
+		
+	def GetDirList(self):
+		dirlist = os.listdir(os.getcwd())
+		
+		return dirlist
+		
+	
+	def FillFileList(self,filenames):
+		self.filelist.clear()
+		for filename in filenames:
+			self.filelist.append([filename])
+		return
+			
+
+	def dnd_data_received(self, treeview, context, x, y, selection, info, etime):
+		model = treeview.get_model()
+		data = selection.data
+		drop_info = treeview.get_dest_row_at_pos(x, y)
+		if drop_info:
+			path, position = drop_info
+			iter = model.get_iter(path)
+			if model.iter_depth(iter) > 0:
+				parent = model.iter_parent(iter)
+				if position == gtk.TREE_VIEW_DROP_INTO_OR_AFTER or position == gtk.TREE_VIEW_DROP_AFTER:
+					model.insert_after(parent,iter,[data])
+				elif position == gtk.TREE_VIEW_DROP_INTO_OR_BEFORE or position == gtk.TREE_VIEW_DROP_BEFORE:
+					model.insert_before(parent,iter,[data])
+			else:
+				if position == gtk.TREE_VIEW_DROP_INTO_OR_AFTER or position == gtk.TREE_VIEW_DROP_INTO_OR_BEFORE:
+					model.insert_after(iter, None, [data])
+				else:
+					iter = model.append(None,[data])
+					model.append(iter,[data])
+		else:
+			iter = model.append(None,[data])
+			model.append(iter,[data])
+		return
+		
+	def dnd_data_getdata(self, treeview, context, selection, target_id, etime):
+		treeselection = treeview.get_selection()
+		model, iter = treeselection.get_selected()
+		data = model.get_value(iter, 0)
+		selection.set('STRING', 8, data)
+		return
+		
+	def setdatadir(self, widget):
+		chooser = gtk.FileChooserDialog(title="Select Data Directory",action=gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
+                                  buttons=(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_OPEN,gtk.RESPONSE_OK))
+		chooser.set_default_response(gtk.RESPONSE_OK)
+		chooser.set_current_folder(os.getcwd())
+		response = chooser.run()
+		if response == gtk.RESPONSE_OK:
+			os.chdir(chooser.get_filename())
+			self.FillFileList(self.GetDirList())
+		chooser.destroy()
+
+	def handle_plotlist_keypress(self,widget,event):
+		keyname = gtk.gdk.keyval_name(event.keyval)
+		print keyname
+		if keyname in ["Delete", "BackSpace"]:
+			self.deleteplotlistentry(widget)
+			
+		return True
+		
+	def deleteplotlistentry(self, treeview):
+		treeselection = treeview.get_selection()
+		model, iter = treeselection.get_selected()
+		model.remove(iter)
+		return
+			
+
+app = appGui()
+gtk.main()
