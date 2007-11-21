@@ -1,7 +1,6 @@
 #!/usr/bin/wish
 
 package require BLT
-package require Tix
 
 #set images(normal) [image create photo -format gif -data {
 #    R0lGODlhEAANAMIAAAAAAH9/f///////AL+/vwAA/wAAAAAAACH5BAEAAAUALAAAAAAQAA0A
@@ -35,11 +34,11 @@ A1rBYKkPRhjjsI5QmGozNEoUhMKCAkNdRDCIAEAGDCIwjxFRLjNgpmOgTS7AXC/YmG5vnWAJdAAN
 MCQhMBEDbQUTMB0YKjAUDgYHDxUwJxYxG5FRmRpMFx8lRyMdmzFBADs=
 } ]
 
-proc loadBT5File  {fileName x c cr t m} {
+proc loadBT5File  {fileName x c cr t m cn br bl fr fl} {
 	global datasets
-	global $x $c $cr $t $m
+	global $x $c $cr $t $m $cn $br $bl $fr $fl
 
-	#puts "In load proc: $x $c $cr $t $m"
+	#puts "In load proc: $x $c $cr $t $m $cn $br $bl $fr $fl"
 
 	set lc 0
 	set mon(0) 0
@@ -81,11 +80,17 @@ proc loadBT5File  {fileName x c cr t m} {
 	}
 
 	foreach index [lsort -integer [array names xvar]] {
-		$x append {$xvar($index)}
-		$c append {$det1($index)+$det2($index)+$det3($index)+$det4($index)+$det5($index)}
-		$cr append [expr [$c index $index] / $counttime]
-		$t append {$trans($index)}
-		$m append {$mon($index)}
+	    $x append {$xvar($index)}
+	    $c append {$det1($index)+$det2($index)+$det3($index)+$det4($index)+$det5($index)}
+	    $cr append [expr [$c index $index] / $counttime]
+	    $t append {$trans($index)}
+	    $m append {$mon($index)}
+	    $cn append {$det2($index)}
+	    $bl append {$det1($index)}
+	    $br append {$det3($index)}
+	    $fl append {$det4($index)}
+	    $fr append {$det5($index)}
+
 	}
 
 }
@@ -96,21 +101,32 @@ proc resetGraph { } {
 	global images
 
 	foreach elem [ $graph element show] {
-		$graph element delete $elem
+	    $graph element delete $elem
 
-		set xvec [join "$elem _xvec" ""]
-		set countratevec [join "$elem _countratevec" ""]
-		set countvec [join "$elem _countvec" ""]
-		set transvec [join "$elem _transvec" ""]
-		set monvec [join "$elem _monvec" ""]
+	    set xvec [join "$elem _xvec" ""]
+	    set countratevec [join "$elem _countratevec" ""]
+	    set countvec [join "$elem _countvec" ""]
+	    set transvec [join "$elem _transvec" ""]
+	    set monvec [join "$elem _monvec" ""]
+	    set cvec [join "$elem _cvec" ""]
+	    set brvec [join "$elem _brvec" ""]
+	    set blvec [join "$elem _blvec" ""]
+	    set frvec [join "$elem _frvec" ""]
+	    set flvec [join "$elem _flvec" ""]
 	
-		global $xvec $countvec $countratevec $transvec $monvec
-	
-		blt::vector destroy $xvec
-		blt::vector destroy $countratevec
-		blt::vector destroy $countvec
-		blt::vector destroy $transvec 
-		blt::vector destroy $monvec
+	    global $xvec $countvec $countratevec $transvec $monvec
+	    global $cvec $brvec $blvec $frvec $flvec
+	    
+	    blt::vector destroy $xvec
+	    blt::vector destroy $countratevec
+	    blt::vector destroy $countvec
+	    blt::vector destroy $transvec 
+	    blt::vector destroy $monvec
+	    blt::vector destroy $cvec
+	    blt::vector destroy $brvec
+	    blt::vector destroy $blvec
+	    blt::vector destroy $frvec
+	    blt::vector destroy $flvec
 	}
 	
 	$tv entry configure all -activeicons "$images(normal) $images(normal)"
@@ -139,48 +155,75 @@ proc addremovePlot { nodeID } {
 		set countvec [join "$filebase _countvec" ""]
 		set transvec [join "$filebase _transvec" ""]
 		set monvec [join "$filebase _monvec" ""]
+		set cvec [join "$filebase _cvec" ""]
+		set brvec [join "$filebase _brvec" ""]
+		set blvec [join "$filebase _blvec" ""]
+		set frvec [join "$filebase _frvec" ""]
+		set flvec [join "$filebase _flvec" ""]
 	
 		global $xvec $countvec $countratevec $transvec $monvec
+		global $cvec $brvec $blvec $frvec $flvec
 	
 		blt::vector create $xvec
 		blt::vector create $countratevec
 		blt::vector create $countvec
 		blt::vector create $transvec 
 		blt::vector create $monvec
+		blt::vector create $cvec
+		blt::vector create $brvec
+		blt::vector create $blvec
+		blt::vector create $frvec
+		blt::vector create $flvec
 
-		loadBT5File $fileName $xvec $countvec $countratevec $transvec $monvec
+
+		loadBT5File $fileName $xvec $countvec $countratevec $transvec $monvec $cvec $brvec $blvec $frvec $flvec
 
 		$graph element create $filebase -symbol scross \
 			-xdata $xvec  \
 			-ydata $countvec
 
 		switch -exact $plotType {
-			count { $graph element configure $filebase -ydata $countvec}
-			countrate { $graph element configure $filebase -ydata $countratevec}
-			trans { $graph element configure $filebase -ydata $transvec}
-			mon { $graph element configure $filebase -ydata  $monvec}
+		    count { $graph element configure $filebase -ydata $countvec}
+		    countrate { $graph element configure $filebase -ydata $countratevec}
+		    trans { $graph element configure $filebase -ydata $transvec}
+		    mon { $graph element configure $filebase -ydata  $monvec}
+		    central { $graph element configure $filebase -ydata  $cvec}
+		    backl {$graph element configure $filebase -ydata $blvec}
+		    backr {$graph element configure $filebase -ydata $brvec}
+		    frontl {$graph element configure $filebase -ydata $flvec}
+		    frontr {$graph element configure $filebase -ydata $frvec}
 		}
 
 	} else {
-		$tv entry configure $nodeID -activeicons "$images(normal) $images(normal)"
-		$tv entry configure $nodeID -icons "$images(normal) $images(normal)"		
+	    $tv entry configure $nodeID -activeicons "$images(normal) $images(normal)"
+	    $tv entry configure $nodeID -icons "$images(normal) $images(normal)"		
 	
-		$graph element delete $filebase
+	    $graph element delete $filebase
 	
-		set xvec [join "$filebase _xvec" ""]
-		set countratevec [join "$filebase _countratevec" ""]
-		set countvec [join "$filebase _countvec" ""]
-		set transvec [join "$filebase _transvec" ""]
-		set monvec [join "$filebase _monvec" ""]
+	    set xvec [join "$filebase _xvec" ""]
+	    set countratevec [join "$filebase _countratevec" ""]
+	    set countvec [join "$filebase _countvec" ""]
+	    set transvec [join "$filebase _transvec" ""]
+	    set monvec [join "$filebase _monvec" ""]
+	    set cvec [join "$filebase _cvec" ""]
+	    set brvec [join "$filebase _brvec" ""]
+	    set blvec [join "$filebase _blvec" ""]
+	    set frvec [join "$filebase _frvec" ""]
+	    set flvec [join "$filebase _flvec" ""]
 	
-		global $xvec $countvec $transvec $monvec
+	    global $xvec $countvec $transvec $monvec
+	    global $cvec $brvec $blvec $frvec $flvec
 	
 		blt::vector destroy $xvec
 		blt::vector destroy $countratevec
 		blt::vector destroy $countvec
 		blt::vector destroy $transvec 
 		blt::vector destroy $monvec
-
+		blt::vector destroy $cvec
+		blt::vector destroy $brvec
+		blt::vector destroy $blvec
+		blt::vector destroy $frvec
+		blt::vector destroy $flvec	
 	
 	}
 }
@@ -189,19 +232,30 @@ proc changePlotType {elem} {
 	global graph
 	global plotType
 
-	set xvec [join "$elem _xvec" ""]
-	set countratevec [join "$elem _countratevec" ""]
-	set countvec [join "$elem _countvec" ""]
-	set transvec [join "$elem _transvec" ""]
-	set monvec [join "$elem _monvec" ""]
+    set xvec [join "$elem _xvec" ""]
+    set countratevec [join "$elem _countratevec" ""]
+    set countvec [join "$elem _countvec" ""]
+    set transvec [join "$elem _transvec" ""]
+    set monvec [join "$elem _monvec" ""]
+    set cvec [join "$elem _cvec" ""]
+    set brvec [join "$elem _brvec" ""]
+    set blvec [join "$elem _blvec" ""]
+    set frvec [join "$elem _frvec" ""]
+    set flvec [join "$elem _flvec" ""]
 
 	global $xvec $countvec $transvec $monvec
+    global $cvec $brvec $blvec $frvec $flvec
 	
 	switch -exact $plotType {
 			count { $graph element configure $elem -ydata $countvec}
 			countrate { $graph element configure $elem -ydata $countratevec}
 			trans { $graph element configure $elem -ydata $transvec}
 			mon { $graph element configure $elem -ydata  $monvec}
+		    central { $graph element configure $elem -ydata  $cvec}
+		    backl {$graph element configure $elem -ydata $blvec}
+		    backr {$graph element configure $elem -ydata $brvec}
+		    frontl {$graph element configure $elem -ydata $flvec}
+		    frontr {$graph element configure $elem -ydata $frvec}
 	}
 }
 
@@ -297,6 +351,11 @@ $ptm add radio  -label "Counts" -variable plotType -value "count" -command {fore
 $ptm add radio -label "Count Rate" -variable plotType -value "countrate" -command {foreach elem [$graph element show] { changePlotType $elem  }}
 $ptm add radio -label "Trans" -variable plotType -value "trans" -command {foreach elem [$graph element show] { changePlotType $elem  }}
 $ptm add radio -label "Mon" -variable plotType -value "mon" -command {foreach elem [$graph element show] { changePlotType $elem  }}
+$ptm add radio -label "Central" -variable plotType -value "central" -command {foreach elem [$graph element show] { changePlotType $elem  }}
+$ptm add radio -label "Back Left" -variable plotType -value "backl" -command {foreach elem [$graph element show] { changePlotType $elem  }}
+$ptm add radio -label "Back Right" -variable plotType -value "backr" -command {foreach elem [$graph element show] { changePlotType $elem  }}
+$ptm add radio -label "Front Left" -variable plotType -value "frontl" -command {foreach elem [$graph element show] { changePlotType $elem  }}
+$ptm add radio -label "Front Right" -variable plotType -value "frontr" -command {foreach elem [$graph element show] { changePlotType $elem  }}
 
 #Set defaults
 set loglinX "no"
@@ -333,19 +392,7 @@ pack $tvf.yscroll -side right -fill y
 pack $tvf.t -side left -fill both -expand true
 pack $tvf -side left -fill y -anchor w
 
-# Create Notebook
-#set nb [tixNoteBook .vp.nb]
-#$nb add plot -label "Plot" -underline 0
-#$nb add data -label "File Data" -underline 0
-#set plottab [frame [$nb subwidget plot].f]
-#set datatab [frame [$nb subwidget data].f]
-#pack $nb $plottab $datatab -fill both -expand true 
-
-# Create File Details Tab
-
-
 # Create graph
-#set graph [blt::graph $plottab.g]
 set graph [blt::graph .vp.g]
 pack $graph -fill both -expand true -side left -anchor w
 
@@ -355,15 +402,51 @@ label .filter.filterLabel -text "Filter: "
 entry .filter.filterEntry
 bind .filter.filterEntry <Return> {filterTree [%W get]}
 
+#button .filter.filterButton -text "Filter" -command {filterTree [.filter.filterEntry get]} 
 pack .filter.filterLabel -side left
 pack .filter.filterEntry -side left 
+#pack .filter.filterButton -side left
+#pack .filter.filterReset -side right -padx 25
 
 #Plot controls
 set pcf [frame .filter.pc]
 #Clear plot button
 button $pcf.filterReset -text "Clear Plot" -command {resetGraph}
 
+##Frame for radiobutton set to control plot type
+#set ptf [frame .filter.pc.pt -borderwidth 1 -relief raised]
+#radiobutton $ptf.c -text "Counts" -variable plotType -value "count" -command {foreach elem [$graph element show] { changePlotType $elem  }}
+#radiobutton $ptf.cr -text "Count Rate" -variable plotType -value "countrate" -command {foreach elem [$graph element show] { changePlotType $elem  }}
+#radiobutton $ptf.t -text "Trans" -variable plotType -value "trans" -command {foreach elem [$graph element show] { changePlotType $elem  }}
+#radiobutton $ptf.m -text "Mon" -variable plotType -value "mon" -command {foreach elem [$graph element show] { changePlotType $elem  }}
+#$ptf.c select
+#pack $ptf.m -side right
+#pack $ptf.t -side right
+#pack $ptf.cr -side right
+#pack $ptf.c -side right 
+
+##Frame for y-axis log/lin choice
+#set logfy [frame .filter.pc.logy -borderwidth 1 -relief raised]
+##Log/lin radiobutton set
+#radiobutton $logfy.log -text "Log Y" -variable loglinY -value "yes" -command { changeLogLinY }
+#radiobutton $logfy.lin -text "Lin Y" -variable loglinY -value "no" -command { changeLogLinY }
+#$logfy.lin select
+#pack $logfy.log -side right
+#pack $logfy.lin -side right
+
+##Frame for y-axis log/lin choice
+#set logfx [frame .filter.pc.logx -borderwidth 1 -relief raised]
+##Log/lin radiobutton set
+#radiobutton $logfx.log -text "Log X" -variable loglinX -value "yes" -command { changeLogLinX }
+#radiobutton $logfx.lin -text "Lin X" -variable loglinX -value "no" -command { changeLogLinX }
+#$logfx.lin select
+#pack $logfx.log -side right
+#pack $logfx.lin -side right
+
 pack $pcf.filterReset -side right -padx 25
+#pack $logfy -side right
+#pack $logfx -side right
+#pack $ptf -side right
 pack $pcf -side right
 
 
