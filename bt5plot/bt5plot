@@ -34,6 +34,9 @@ A1rBYKkPRhjjsI5QmGozNEoUhMKCAkNdRDCIAEAGDCIwjxFRLjNgpmOgTS7AXC/YmG5vnWAJdAAN
 MCQhMBEDbQUTMB0YKjAUDgYHDxUwJxYxG5FRmRpMFx8lRyMdmzFBADs=
 } ]
 
+set plotcolors [list darkblue darkred darkgreen darkorange darkmagenta darkcyan darkgrey black blue red green orange magenta cyan grey]
+set plotcolor 0
+
 proc loadBT5File  {fileName x c cr t m cn br bl fr fl} {
 	global datasets
 	global $x $c $cr $t $m $cn $br $bl $fr $fl
@@ -99,6 +102,9 @@ proc resetGraph { } {
 	global graph
 	global tv
 	global images
+	global plotcolor
+
+	set plotcolor 0	
 
 	foreach elem [ $graph element show] {
 	    $graph element delete $elem
@@ -140,6 +146,9 @@ proc addremovePlot { nodeID } {
 	global images
 	global .tree
 	global plotType
+	global plotcolors
+	global plotcolor
+	global useColors
 	
 	set fileName [.tree label $nodeID]	
 	#puts "$nodeID $fileName" 	
@@ -178,9 +187,20 @@ proc addremovePlot { nodeID } {
 
 		loadBT5File $fileName $xvec $countvec $countratevec $transvec $monvec $cvec $brvec $blvec $frvec $flvec
 
+
+
 		$graph element create $filebase -symbol scross \
 			-xdata $xvec  \
-			-ydata $countvec
+			-ydata $countvec 
+
+		if {$useColors} {
+			set pcol [lindex $plotcolors $plotcolor]
+			
+			$graph element configure $filebase -outline $pcol -color $pcol
+		
+			incr plotcolor
+			if { $plotcolor >= [llength $plotcolors] } { set plotcolor 0}
+		}
 
 		switch -exact $plotType {
 		    count { $graph element configure $filebase -ydata $countvec}
@@ -337,6 +357,7 @@ set pm [menu $mf.plotmb.plotMenu -tearoff 0]
 $pm add cascade -label "Type" -menu $pm.type
 $pm add cascade -label "X-Axis" -menu $pm.xaxis
 $pm add cascade -label "Y-Axis" -menu $pm.yaxis
+$pm add cascade -label "Settings" -menu $pm.settings
 #Create sub menus
 set xam [menu $pm.xaxis -tearoff 0]
 $xam add radio -label "Lin" -variable loglinX -value "no" -command {changeLogLinX}
@@ -357,10 +378,14 @@ $ptm add radio -label "Back Right" -variable plotType -value "backr" -command {f
 $ptm add radio -label "Front Left" -variable plotType -value "frontl" -command {foreach elem [$graph element show] { changePlotType $elem  }}
 $ptm add radio -label "Front Right" -variable plotType -value "frontr" -command {foreach elem [$graph element show] { changePlotType $elem  }}
 
+set psm [menu $pm.settings -tearoff 0]
+$psm add check -label "Use Colors" -variable useColors -offvalue 0 -onvalue 1
+
 #Set defaults
 set loglinX "no"
 set loglinY "no"
 set plotType "count"
+set useColors 0
 
 #pack menubuttons into menu
 pack $mf.filemb -side left
