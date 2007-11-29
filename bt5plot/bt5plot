@@ -36,6 +36,8 @@ MCQhMBEDbQUTMB0YKjAUDgYHDxUwJxYxG5FRmRpMFx8lRyMdmzFBADs=
 
 set plotcolors [list darkblue darkred darkgreen darkorange darkmagenta darkcyan darkgrey black blue red green orange magenta cyan grey]
 set plotcolor 0
+#array set plotVals [
+
 
 proc loadBT5File  {fileName x c cr t m cn br bl fr fl} {
 	global datasets
@@ -343,6 +345,35 @@ proc filterTree { filterString } {
 	
 }
 
+proc getDataVals {} {
+	global pointVals
+	global num4var
+	global transvar
+	global sumvar
+	global monvar
+
+	global graph
+
+	set elem [lindex [array get pointVals name] 1]
+	set vecindex [lindex [array get pointVals index] 1]  
+	set xval [lindex [array get pointVals x] 1]
+	set yval [lindex [array get pointVals y] 1]
+
+
+	if { [string length $elem] != 0 } {
+	set num4var [lindex [[ join "$elem _cvec" ""] range $vecindex $vecindex] 0]
+	set transvar [lindex [[ join "$elem _transvec" ""] range $vecindex $vecindex] 0]
+	set sumvar [lindex [[ join "$elem _countvec" ""] range $vecindex $vecindex] 0]
+	set monvar [lindex [[ join "$elem _monvec" ""] range $vecindex $vecindex] 0]
+
+	if { [$graph element exists valMarker] == 1} {		
+		$graph element configure valMarker -data "$xval $yval" 
+	} else {
+		$graph element create valMarker -data "$xval $yval" -symbol circle
+	}
+	}
+}
+
 #Create menu frame
 set mf [frame .mf]
 
@@ -418,7 +449,7 @@ pack $tvf.t -side left -fill both -expand true
 pack $tvf -side left -fill y -anchor w
 
 # Create graph
-set graph [blt::graph .vp.g]
+set graph [blt::graph .vp.g -halo 30]
 pack $graph -fill both -expand true -side left -anchor w
 
 # Create filter frame
@@ -427,52 +458,29 @@ label .filter.filterLabel -text "Filter: "
 entry .filter.filterEntry
 bind .filter.filterEntry <Return> {filterTree [%W get]}
 
-#button .filter.filterButton -text "Filter" -command {filterTree [.filter.filterEntry get]} 
 pack .filter.filterLabel -side left
 pack .filter.filterEntry -side left 
-#pack .filter.filterButton -side left
-#pack .filter.filterReset -side right -padx 25
 
 #Plot controls
 set pcf [frame .filter.pc]
 #Clear plot button
 button $pcf.filterReset -text "Clear Plot" -command {resetGraph}
 
-##Frame for radiobutton set to control plot type
-#set ptf [frame .filter.pc.pt -borderwidth 1 -relief raised]
-#radiobutton $ptf.c -text "Counts" -variable plotType -value "count" -command {foreach elem [$graph element show] { changePlotType $elem  }}
-#radiobutton $ptf.cr -text "Count Rate" -variable plotType -value "countrate" -command {foreach elem [$graph element show] { changePlotType $elem  }}
-#radiobutton $ptf.t -text "Trans" -variable plotType -value "trans" -command {foreach elem [$graph element show] { changePlotType $elem  }}
-#radiobutton $ptf.m -text "Mon" -variable plotType -value "mon" -command {foreach elem [$graph element show] { changePlotType $elem  }}
-#$ptf.c select
-#pack $ptf.m -side right
-#pack $ptf.t -side right
-#pack $ptf.cr -side right
-#pack $ptf.c -side right 
-
-##Frame for y-axis log/lin choice
-#set logfy [frame .filter.pc.logy -borderwidth 1 -relief raised]
-##Log/lin radiobutton set
-#radiobutton $logfy.log -text "Log Y" -variable loglinY -value "yes" -command { changeLogLinY }
-#radiobutton $logfy.lin -text "Lin Y" -variable loglinY -value "no" -command { changeLogLinY }
-#$logfy.lin select
-#pack $logfy.log -side right
-#pack $logfy.lin -side right
-
-##Frame for y-axis log/lin choice
-#set logfx [frame .filter.pc.logx -borderwidth 1 -relief raised]
-##Log/lin radiobutton set
-#radiobutton $logfx.log -text "Log X" -variable loglinX -value "yes" -command { changeLogLinX }
-#radiobutton $logfx.lin -text "Lin X" -variable loglinX -value "no" -command { changeLogLinX }
-#$logfx.lin select
-#pack $logfx.log -side right
-#pack $logfx.lin -side right
-
 pack $pcf.filterReset -side right -padx 25
-#pack $logfy -side right
-#pack $logfx -side right
-#pack $ptf -side right
 pack $pcf -side right
+
+
+#Data Value Display
+set dvdf [frame .filter.dvd -padx 25]
+pack [label $dvdf.num4lbl -text "#4: "] -side left
+pack [label $dvdf.num4 -textvariable num4var] -side left
+pack [label $dvdf.translbl -text "Trans: "] -side left
+pack [label $dvdf.trans -textvariable transvar] -side left
+pack [label $dvdf.sumlbl -text "Sum: "] -side left
+pack [label $dvdf.sum -textvariable sumvar] -side left
+pack [label $dvdf.monlbl -text "Mon: "] -side left
+pack [label $dvdf.mon -textvariable monvar] -side left
+pack $dvdf -side right -anchor s
 
 
 # Pack  widgets
@@ -480,7 +488,13 @@ pack $mf -side top -anchor w
 pack .vp -fill both -expand true -anchor w
 pack .filter -side bottom -fill x -anchor sw
 
-Blt_ZoomStack $graph
+#Blt_ZoomStack $graph
+
+bind $graph <ButtonPress-1> {
+%W element closest %x %y pointVals
+getDataVals 
+#puts [array get pointVals name]
+}
 
 
 
