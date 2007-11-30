@@ -105,36 +105,45 @@ proc resetGraph { } {
 	global tv
 	global images
 	global plotcolor
+	global transvar
+	global sumvar
+	global monvar
+	global num4var
 
 	set plotcolor 0	
 
 	foreach elem [ $graph element show] {
-	    $graph element delete $elem
-
-	    set xvec [join "$elem _xvec" ""]
-	    set countratevec [join "$elem _countratevec" ""]
-	    set countvec [join "$elem _countvec" ""]
-	    set transvec [join "$elem _transvec" ""]
-	    set monvec [join "$elem _monvec" ""]
-	    set cvec [join "$elem _cvec" ""]
-	    set brvec [join "$elem _brvec" ""]
-	    set blvec [join "$elem _blvec" ""]
-	    set frvec [join "$elem _frvec" ""]
-	    set flvec [join "$elem _flvec" ""]
 	
-	    global $xvec $countvec $countratevec $transvec $monvec
-	    global $cvec $brvec $blvec $frvec $flvec
+	    if { [string equal $elem "valMarker"] != 1} {
+	    	$graph element delete $elem
+	   
+		set xvec [join "$elem _xvec" ""]
+	    	set countratevec [join "$elem _countratevec" ""]
+	    	set countvec [join "$elem _countvec" ""]
+	    	set transvec [join "$elem _transvec" ""]
+	    	set monvec [join "$elem _monvec" ""]
+	    	set cvec [join "$elem _cvec" ""]
+	    	set brvec [join "$elem _brvec" ""]
+	    	set blvec [join "$elem _blvec" ""]
+	    	set frvec [join "$elem _frvec" ""]
+	    	set flvec [join "$elem _flvec" ""]
+	
+	    	global $xvec $countvec $countratevec $transvec $monvec
+	    	global $cvec $brvec $blvec $frvec $flvec
 	    
-	    blt::vector destroy $xvec
-	    blt::vector destroy $countratevec
-	    blt::vector destroy $countvec
-	    blt::vector destroy $transvec 
-	    blt::vector destroy $monvec
-	    blt::vector destroy $cvec
-	    blt::vector destroy $brvec
-	    blt::vector destroy $blvec
-	    blt::vector destroy $frvec
-	    blt::vector destroy $flvec
+	    	blt::vector destroy $xvec
+	    	blt::vector destroy $countratevec
+	    	blt::vector destroy $countvec
+	    	blt::vector destroy $transvec 
+	    	blt::vector destroy $monvec
+	    	blt::vector destroy $cvec
+	    	blt::vector destroy $brvec
+	    	blt::vector destroy $blvec
+	    	blt::vector destroy $frvec
+	    	blt::vector destroy $flvec
+	    } else {
+		clearValMarks
+	    }
 	}
 	
 	$tv entry configure all -activeicons "$images(normal) $images(normal)"
@@ -151,6 +160,7 @@ proc addremovePlot { nodeID } {
 	global plotcolors
 	global plotcolor
 	global useColors
+	global valMarkElem
 	
 	set fileName [.tree label $nodeID]	
 	#puts "$nodeID $fileName" 	
@@ -221,6 +231,10 @@ proc addremovePlot { nodeID } {
 	    $tv entry configure $nodeID -icons "$images(normal) $images(normal)"		
 	
 	    $graph element delete $filebase
+	    if { [string equal $filebase $valMarkElem] == 1 } {
+		$graph element delete valMarker
+		clearValMarks
+	    }
 	
 	    set xvec [join "$filebase _xvec" ""]
 	    set countratevec [join "$filebase _countratevec" ""]
@@ -351,6 +365,7 @@ proc getDataVals {} {
 	global transvar
 	global sumvar
 	global monvar
+	global valMarkElem
 
 	global graph
 
@@ -359,6 +374,7 @@ proc getDataVals {} {
 	set xval [lindex [array get pointVals x] 1]
 	set yval [lindex [array get pointVals y] 1]
 
+	set valMarkElem $elem
 
 	if { [string length $elem] != 0 } {
 	set num4var [lindex [[ join "$elem _cvec" ""] range $vecindex $vecindex] 0]
@@ -372,6 +388,20 @@ proc getDataVals {} {
 		$graph element create valMarker -data "$xval $yval" -symbol circle
 	}
 	}
+}
+
+proc clearValMarks {} {
+	uplevel #0 {
+		set num4var "";
+		set transvar "";
+		set sumvar "";
+		set monvar "";
+		set valMarkElem "";
+		if { [$graph element exists valMarker] == 1} {
+			$graph element delete valMarker
+		}
+	}
+
 }
 
 #Create menu frame
