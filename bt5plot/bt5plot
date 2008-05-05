@@ -365,6 +365,7 @@ proc getDataVals {} {
 	global transvar
 	global sumvar
 	global monvar
+	global ratevar
 	global valMarkElem
 
 	global graph
@@ -381,6 +382,7 @@ proc getDataVals {} {
 	set transvar [lindex [[ join "$elem _transvec" ""] range $vecindex $vecindex] 0]
 	set sumvar [lindex [[ join "$elem _countvec" ""] range $vecindex $vecindex] 0]
 	set monvar [lindex [[ join "$elem _monvec" ""] range $vecindex $vecindex] 0]
+	set ratevar [lindex [[ join "$elem _countratevec" ""] range $vecindex $vecindex] 0]
 
 	if { [$graph element exists valMarker] == 1} {		
 		$graph element configure valMarker -data "$xval $yval" 
@@ -396,6 +398,7 @@ proc clearValMarks {} {
 		set transvar "";
 		set sumvar "";
 		set monvar "";
+		set ratevar "";
 		set valMarkElem "";
 		if { [$graph element exists valMarker] == 1} {
 			$graph element delete valMarker
@@ -510,6 +513,8 @@ pack [label $dvdf.sumlbl -text "Sum: "] -side left
 pack [label $dvdf.sum -textvariable sumvar] -side left
 pack [label $dvdf.monlbl -text "Mon: "] -side left
 pack [label $dvdf.mon -textvariable monvar] -side left
+pack [label $dvdf.ratelbl -text "Rate: "] -side left
+pack [label $dvdf.rate -textvariable ratevar] -side left
 pack $dvdf -side right -anchor s
 
 
