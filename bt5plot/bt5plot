@@ -230,11 +230,10 @@ proc addremovePlot { nodeID } {
 	    $tv entry configure $nodeID -activeicons "$images(normal) $images(normal)"
 	    $tv entry configure $nodeID -icons "$images(normal) $images(normal)"		
 	
-	    $graph element delete $filebase
-	    if { [string equal $filebase $valMarkElem] == 1 } {
-		$graph element delete valMarker
+	    if { [$graph element exists valMarker] == 1 } {
 		clearValMarks
 	    }
+	    $graph element delete $filebase
 	
 	    set xvec [join "$filebase _xvec" ""]
 	    set countratevec [join "$filebase _countratevec" ""]
@@ -279,19 +278,19 @@ proc changePlotType {elem} {
     set frvec [join "$elem _frvec" ""]
     set flvec [join "$elem _flvec" ""]
 
-	global $xvec $countvec $transvec $monvec
+    global $xvec $countvec $transvec $monvec $countratevec
     global $cvec $brvec $blvec $frvec $flvec
 	
 	switch -exact $plotType {
-			count { $graph element configure $elem -ydata $countvec}
-			countrate { $graph element configure $elem -ydata $countratevec}
-			trans { $graph element configure $elem -ydata $transvec}
-			mon { $graph element configure $elem -ydata  $monvec}
-		    central { $graph element configure $elem -ydata  $cvec}
-		    backl {$graph element configure $elem -ydata $blvec}
-		    backr {$graph element configure $elem -ydata $brvec}
-		    frontl {$graph element configure $elem -ydata $flvec}
-		    frontr {$graph element configure $elem -ydata $frvec}
+		count { $graph element configure $elem -ydata $countvec}
+		countrate { $graph element configure $elem -ydata $countratevec}
+		trans { $graph element configure $elem -ydata $transvec}
+		mon { $graph element configure $elem -ydata  $monvec}
+	    	central { $graph element configure $elem -ydata  $cvec}
+		backl {$graph element configure $elem -ydata $blvec}
+		backr {$graph element configure $elem -ydata $brvec}
+		frontl {$graph element configure $elem -ydata $flvec}
+		frontr {$graph element configure $elem -ydata $frvec}
 	}
 }
 
