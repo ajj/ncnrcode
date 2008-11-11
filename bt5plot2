@@ -12,190 +12,284 @@ from matplotlib.backends.backend_gtk import FigureCanvasGTK, NavigationToolbar
 import usans
 
 try:
-	import pygtk
-	pygtk.require("2.0")
-	
+    import pygtk
+    pygtk.require("2.0")
+    
 except:
-	pass
+    pass
 
 try:
-	import gtk
-	import gtk.glade
+    import gtk
+    import gtk.glade
 except:
-	sys.exit(1)
+    sys.exit(1)
 
 
 
 class appGui:
-	
-	TARGETS = [('STRING', gtk.TARGET_SAME_APP, 0)]
-	
-	def __init__(self):
-		
-		gladefile = "bt5plot2.glade"
-		self.windowname = "win_Main"
-		self.wTree = gtk.glade.XML(gladefile, self.windowname)
+    
+    TARGETS = [('STRING', gtk.TARGET_SAME_APP, 0)]
+    
+    def __init__(self):
+        
+        gladefile = "bt5plot2.glade"
+        self.windowname = "win_Main"
+        self.wTree = gtk.glade.XML(gladefile, self.windowname)
 
-		event_dic = {"on_win_Main_destroy" : gtk.main_quit,
-					 "on_quit1_activate" : gtk.main_quit,
-					 "on_set_data_dir1_activate" : self.setdatadir,
-					 "on_xaxis_loglin_activate" : self.handle_xaxis_loglin,
-					 "on_yaxis_loglin_activate" : self.handle_yaxis_loglin}
-	#				 "on_tv_plotlist_key_press_event" : self.handle_plotlist_keypress}
+        event_dic = {"on_win_Main_destroy" : gtk.main_quit,
+                     "on_quit1_activate" : gtk.main_quit,
+                     "on_set_data_dir1_activate" : self.setdatadir,
+                     "on_xaxis_loglin_activate" : self.handle_xaxis_loglin,
+                     "on_yaxis_loglin_activate" : self.handle_yaxis_loglin,
+                     "on_plot_type_activate" : self.handle_plot_type_change}
+    #                 "on_tv_plotlist_key_press_event" : self.handle_plotlist_keypress}
 
-		
-		self.wTree.signal_autoconnect(event_dic)
+        #This is a bit clunky, but never mind.
+        #Set default plottype to rate. Glade definition sets that as default active button in menu
+        self.plottype = 'rate'
+        
+        self.wTree.signal_autoconnect(event_dic)
 
-		# Set up file list
-		self.filelistview = self.wTree.get_widget("tv_filelist")
-		
-		self.filelist = gtk.ListStore(str,'gboolean',object,object,object)
-		self.filelist.set_sort_column_id(0,gtk.SORT_ASCENDING)
-		self.filelistview.set_model(self.filelist)
+        # Set up file list
+        self.filelistview = self.wTree.get_widget("tv_filelist")
+        
+        self.filelist = gtk.ListStore(str, 'gboolean', object, object, object)
+        self.filelist.set_sort_column_id(0, gtk.SORT_ASCENDING)
+        self.filelistview.set_model(self.filelist)
 
-		self.cellrenderertoggle = gtk.CellRendererToggle()
-		self.cellrenderertoggle.set_property('activatable', True)
-		self.cellrenderertoggle.connect("toggled", self.handle_plot_toggle, self.filelist)
-	
-		self.AddFileListColumns()
+        self.cellrenderertoggle = gtk.CellRendererToggle()
+        self.cellrenderertoggle.set_property('activatable', True)
+        self.cellrenderertoggle.connect("toggled", self.handle_plot_toggle, self.filelist)
+    
+        self.AddFileListColumns()
 
-		#fill the file list
-		self.FillFileList(self.GetDirList())
+        #fill the file list
+        self.FillFileList(self.GetDirList())
 
-		# Set up graphing widget to display xpeek data
-		self.figure = Figure(figsize=(4,4), dpi=72)
-		self.axis = self.figure.add_subplot(111)
-		self.axis.set_xlabel('Motor position')
-		self.axis.set_ylabel('Counts')
-		#self.axis.set_title('XPeek')
-		self.axis.grid(True)
-		
-		self.canvas = FigureCanvasGTK(self.figure)
-		self.canvas.show()
-		
-		self.plotView = self.wTree.get_widget("hbox1")
-		self.plotView.pack_start(self.canvas, True, True)	
-		
-		#self.filelistview.enable_model_drag_source( gtk.gdk.BUTTON1_MASK,
+        # Set up graphing widget to display xpeek data
+        self.figure = Figure(figsize=(4, 4), dpi=72)
+        self.axis = self.figure.add_subplot(111)
+        self.axis.set_yscale('log')
+        self.axis.set_aspect('auto')
+        self.axis.set_autoscale_on('True')
+        self.axis.set_xlabel('Motor position')
+        self.axis.set_ylabel('Counts')
+        self.axis.grid(True)
+        
+        self.canvas = FigureCanvasGTK(self.figure)
+        self.canvas.show()
+        
+        self.plotView = self.wTree.get_widget("hbox1")
+        self.plotView.pack_start(self.canvas, True, True)    
+        
+        #self.filelistview.enable_model_drag_source( gtk.gdk.BUTTON1_MASK,
                 #                                  self.TARGETS,
                 #                                   gtk.gdk.ACTION_COPY)
 
-		#self.filelistview.connect("drag_data_get", self.dnd_data_getdata)
-		
-		
-	def AddFileListColumns(self):
-		"""This function adds a column to the list view.
-		First it create the gtk.TreeViewColumn and then set
-		some needed properties"""
-						
-		column = gtk.TreeViewColumn('Filename', gtk.CellRendererText()
-			, text=0)
-		column.set_resizable(True)		
-		column.set_sort_column_id(0)
-		self.filelistview.append_column(column)
+        #self.filelistview.connect("drag_data_get", self.dnd_data_getdata)
+        
+        
+    def AddFileListColumns(self):
+        """This function adds a column to the list view.
+        First it create the gtk.TreeViewColumn and then set
+        some needed properties"""
+                        
+        column = gtk.TreeViewColumn('Filename', gtk.CellRendererText()
+            , text=0)
+        column.set_resizable(True)        
+        column.set_sort_column_id(0)
+        self.filelistview.append_column(column)
 
-		column = gtk.TreeViewColumn('', self.cellrenderertoggle, active=1)
-		self.filelistview.append_column(column)
-		return
-		
-	def GetDirList(self):
-		dirlist = os.listdir(os.getcwd())
-		
-		bt5list = [ x for x in dirlist if x.find('.bt5') > 0]
-		
-		return bt5list
-		
-	
-	def FillFileList(self,filenames):
-		self.filelist.clear()
-		for filename in filenames:
-			data = usans.getBT5DataFromFile(filename)
-			self.filelist.append([filename,0,data,0,0])
-		return
-			
+        column = gtk.TreeViewColumn('', self.cellrenderertoggle, active=1)
+        self.filelistview.append_column(column)
+        return
+        
+    def GetDirList(self):
+        dirlist = os.listdir(os.getcwd())
+        
+        bt5list = [ x for x in dirlist if x.find('.bt5') > 0]
+        
+        return bt5list
+        
+    
+    def FillFileList(self, filenames):
+        self.filelist.clear()
+        for filename in filenames:
+            data,metadata = usans.getBT5DataFromFile(filename)
+            self.filelist.append([filename, 0, (data,metadata), 0, 0])
+        return
+            
 
-	def setdatadir(self, widget):
-		chooser = gtk.FileChooserDialog(title="Select Data Directory",action=gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
-                                  buttons=(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_OPEN,gtk.RESPONSE_OK))
-		chooser.set_default_response(gtk.RESPONSE_OK)
-		chooser.set_current_folder(os.getcwd())
-		response = chooser.run()
-		if response == gtk.RESPONSE_OK:
-			os.chdir(chooser.get_filename())
-			self.FillFileList(self.GetDirList())
-		chooser.destroy()
+    def setdatadir(self, widget):
+        chooser = gtk.FileChooserDialog(title="Select Data Directory", action=gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
+                                  buttons=(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OPEN, gtk.RESPONSE_OK))
+        chooser.set_default_response(gtk.RESPONSE_OK)
+        chooser.set_current_folder(os.getcwd())
+        response = chooser.run()
+        if response == gtk.RESPONSE_OK:
+            os.chdir(chooser.get_filename())
+            self.FillFileList(self.GetDirList())
+        chooser.destroy()
 
-	def handle_plot_toggle(self, cell, path, model):
-		model[path][1] = not model[path][1]
+    def handle_plot_toggle(self, cell, path, model):
+        model[path][1] = not model[path][1]
 
-		if model[path][1]:
-			#add plot
-			self.add_plot(model, path)
-		else:
-			#remove plot
-			self.remove_plot(model, path)
-		return
+        if model[path][1]:
+            #add plot
+            self.add_plot(model, path)
+        else:
+            #remove plot
+            self.remove_plot(model, path)
+        return
 
-	def add_plot(self, model, path):
-		
-		xdata = []
-		ydata = []
+    def add_plot(self, model, path):
+        
+        self.make_plottable_dataset(model, path, self.plottype)
 
-		data =  model[path][2]
-		mvals =  data.keys()
-		mvals.sort(usans.numeric_compare)
-		for mval in mvals:
-			xdata.append(mval)
-			ydata.append(data[mval][1]+data[mval][2]+data[mval][4]+data[mval][5]+data[mval][6])
-			
-		model[path][3] = (xdata,ydata)
+        if self.plottype == 'split':
+        	model[path][4] = self.axis.plot(model[path][3][0],model[path][3][1], 'o',
+											 model[path][3][0],model[path][3][2], 'o',
+											 model[path][3][0],model[path][3][3], 'o',
+											 model[path][3][0],model[path][3][4], 'o',
+											 model[path][3][0],model[path][3][5], 'o')
+        else:
+            model[path][4] = self.axis.plot(model[path][3][0],model[path][3][1], 'bo')
+        
+        self.axis.autoscale_view()
+        self.canvas.draw()
+        return
 
-		model[path][4], = self.axis.plot(xdata,ydata)
-		self.canvas.draw()
-		return
+    def make_plottable_dataset(self, model, path, type):
+         
+         data,metadata = model[path][2]
+         
+         if type == 'total':
+             #generate totals
+             xdata = []
+             ydata = []     
+             
+             mvals = data.keys()
+             mvals.sort(usans.numeric_compare)
+             for mval in mvals:
+                 xdata.append(mval)
+                 ydata.append(data[mval][1] + data[mval][2] + data[mval][4] + data[mval][5] + data[mval][6])
+             
+             model[path][3] = [xdata, ydata]
+             
+         elif type == 'rate':
+             # generate countrate
+             xdata = []
+             ydata = []
+             
+             mvals = data.keys()
+             mvals.sort(usans.numeric_compare)
+             for mval in mvals:
+                 xdata.append(mval)
+             
+             if metadata['base'] == 'TIME':
+             	#Counting in TIME base, so normalize by seconds
+             	cnttime = metadata['mon']
+             	for mval in mvals:
+             		ydata.append((data[mval][1] + data[mval][2] + data[mval][4] + data[mval][5] + data[mval][6])/cnttime)
+             else:
+             	#Must be counting in monitor base so normalize by monitor
+             	moncts = metadata['mon']
+                for mval in mvals:
+             		ydata.append((data[mval][1] + data[mval][2] + data[mval][4] + data[mval][5] + data[mval][6])/cnttime)
+             
+             model[path][3] = [xdata, ydata]
+             
+         elif type == 'trans':
+             xdata = []
+             ydata = []
+             
+             mvals = data.keys()
+             mvals.sort(usans.numeric_compare)
+             for mval in mvals:
+                 xdata.append(mval)
+                 ydata.append(data[mval][3])
+             
+             model[path][3] = [xdata, ydata]             
+         
+         elif type == 'mon':
+             xdata = []
+             ydata = []
+             
+             mvals = data.keys()
+             mvals.sort(usans.numeric_compare)
+             for mval in mvals:
+                 xdata.append(mval)
+                 ydata.append(data[mval][0])
+             
+             model[path][3] = [xdata, ydata]             
+             
+         elif type == 'split':
+             xdata = []
+             ydata1 = []
+             ydata2 = []
+             ydata3 = []
+             ydata4 = []
+             ydata5 = []
+             
+             mvals = data.keys()
+             mvals.sort(usans.numeric_compare)
+             for mval in mvals:
+                 xdata.append(mval)
+                 ydata1.append(data[mval][1])   
+                 ydata2.append(data[mval][2])   
+                 ydata3.append(data[mval][4])   
+                 ydata4.append(data[mval][5])   
+                 ydata5.append(data[mval][6])   
 
-	def remove_plot(self, model, path):
+             model[path][3] = [xdata,ydata1,ydata2,ydata3,ydata4,ydata5]
+         else:
+         	pass
+             
+         return
 
-		self.axis.lines.remove(model[path][4])
-		self.canvas.draw()
-		return
+    def remove_plot(self, model, path):
 
-	def handle_xaxis_loglin(self,widget):
+    	for line in model[path][4]:
+    		self.axis.lines.remove(line)
+    		
+    	self.axis.autoscale_view()
+        self.canvas.draw()        
+        return
 
-
-		if (self.axis.get_xscale() == "log"):
-			self.axis.set_xscale('linear')
-		else:
-			self.axis.set_xscale('log')		
-
-		self.canvas.draw()
-		return	
-
-	def handle_yaxis_loglin(self,widget):
+    def handle_xaxis_loglin(self, widget):
 
 
-		if (self.axis.get_yscale() == "log"):
-			self.axis.set_yscale('linear')
-		else:
-			self.axis.set_yscale('log')		
+        if (self.axis.get_xscale() == "log"):
+            self.axis.set_xscale('linear')
+        else:
+            self.axis.set_xscale('log')        
 
-		self.canvas.draw()
-		return
+        self.axis.autoscale_view()
 
-	#def handle_plotlist_keypress(self,widget,event):
-	#	keyname = gtk.gdk.keyval_name(event.keyval)
-	#	print keyname
-	#	if keyname in ["Delete", "BackSpace"]:
-	#		self.deleteplotlistentry(widget)
-	#		
-	#	return True
-		
-	#def deleteplotlistentry(self, treeview):
-	#	treeselection = treeview.get_selection()
-	#	model, iter = treeselection.get_selected()
-	#	model.remove(iter)
-	#	return
-			
+        self.canvas.draw()
+        
+        return    
+
+    def handle_yaxis_loglin(self, widget):
+
+
+        if (self.axis.get_yscale() == "log"):
+            self.axis.set_yscale('linear')
+        else:
+            self.axis.set_yscale('log')        
+
+        self.axis.autoscale_view()
+        self.canvas.draw()
+        return
+       
+    def handle_plot_type_change(self,widget):
+    	    	
+    	if widget.get_active():
+    		self.plottype = widget.get_name().split('_')[1]
+    		print self.plottype
+    		
+    	return
+    	
 
 app = appGui()
 gtk.main()
