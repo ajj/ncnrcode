@@ -252,8 +252,7 @@ class appGui:
     	for line in model[path][4]:
     		self.axis.lines.remove(line)
     		
-    	self.axis.autoscale_view()
-        self.canvas.draw()        
+        self.rescale_and_redraw()
         return
 
     def handle_xaxis_loglin(self, widget):
@@ -264,9 +263,8 @@ class appGui:
         else:
             self.axis.set_xscale('log')        
 
-        self.axis.autoscale_view()
 
-        self.canvas.draw()
+        self.rescale_and_redraw()
         
         return    
 
@@ -278,8 +276,7 @@ class appGui:
         else:
             self.axis.set_yscale('log')        
 
-        self.axis.autoscale_view()
-        self.canvas.draw()
+        self.rescale_and_redraw()
         return
        
     def handle_plot_type_change(self,widget):
@@ -290,6 +287,27 @@ class appGui:
     		
     	return
     	
+    def rescale_and_redraw(self):
+
+        xdata = []
+        ydata = []
+
+        for line in self.axis.lines:
+             xdata.extend(line.get_xdata())
+             ydata.extend(line.get_ydata())
+
+        xmin = float(min(xdata)*0.95)
+        xmax = float(max(xdata)*1.05)
+        ymin = float(min(ydata)*0.95)
+        ymax = float(max(ydata)*1.05)	
+
+        self.axis.set_xlim(xmin,xmax)
+        self.axis.set_ylim(ymin,ymax)
+        
+        self.axis.autoscale_view()
+        self.canvas.draw()
+
+        return
 
 app = appGui()
 gtk.main()
