@@ -128,47 +128,118 @@
 
 	      <child>
 		<widget class="GtkMenu" id="menuitem3_menu">
-		   <child>
-		     <widget class="GtkMenuItem" id="xaxis1">
-			<property name="visible">True</property>
-			<property name="label" translatable="yes">_X-axis</property>
-	      		<property name="use_underline">True</property>
-			<child>
-			  <widget class="GtkMenu" id="xaxis1_menu">
-				<child>
-				  <widget class="GtkMenuItem" id="loglin1">
-					<property name="visible">True</property>
-					<property name="label" translatable="yes">_Log/Lin</property>
-	      				<property name="use_underline">True</property>
-					<signal name="activate" handler="on_xaxis_loglin_activate"/>
-				  </widget>
-				</child>	
-			  </widget>
-			</child>
-		     </widget>
-		   </child>
-   		   <child>
-		     <widget class="GtkMenuItem" id="yaxis1">
-			<property name="visible">True</property>
-			<property name="label" translatable="yes">_Y-axis</property>
-	      		<property name="use_underline">True</property>
-			<child>
-			  <widget class="GtkMenu" id="yaxis1_menu">
-				<child>
-				  <widget class="GtkMenuItem" id="loglin2">
-					<property name="visible">True</property>
-					<property name="label" translatable="yes">_Log/Lin</property>
-	      				<property name="use_underline">True</property>
-					<signal name="activate" handler="on_yaxis_loglin_activate"/>
-				  </widget>
-				</child>	
-			  </widget>
-			</child>
-		     </widget>
-		   </child>
 
+		  <child>
+		    <widget class="GtkMenuItem" id="plot_type1">
+		      <property name="visible">True</property>
+		      <property name="label" translatable="yes">_Plot Type</property>
+		      <property name="use_underline">True</property>
+		      <signal name="activate" handler="on_plot_type1_activate" last_modification_time="Tue, 11 Nov 2008 15:45:10 GMT"/>
 
+		      <child>
+			<widget class="GtkMenu" id="plot_type1_menu">
 
+			  <child>
+			    <widget class="GtkRadioMenuItem" id="rmi_total">
+			      <property name="visible">True</property>
+			      <property name="label" translatable="yes">Total Counts</property>
+			      <property name="use_underline">True</property>
+			      <property name="active">False</property>
+			      <signal name="activate" handler="on_plot_type_activate" last_modification_time="Tue, 11 Nov 2008 15:48:27 GMT"/>
+			    </widget>
+			  </child>
+
+			  <child>
+			    <widget class="GtkRadioMenuItem" id="rmi_rate">
+			      <property name="visible">True</property>
+			      <property name="label" translatable="yes">Count Rate</property>
+			      <property name="use_underline">True</property>
+			      <property name="active">True</property>
+			      <property name="group">rmi_total</property>
+			      <signal name="activate" handler="on_plot_type_activate" last_modification_time="Tue, 11 Nov 2008 15:48:27 GMT"/>
+			    </widget>
+			  </child>
+
+			  <child>
+			    <widget class="GtkRadioMenuItem" id="rmi_trans">
+			      <property name="visible">True</property>
+			      <property name="label" translatable="yes">Transmission</property>
+			      <property name="use_underline">True</property>
+			      <property name="active">False</property>
+			      <property name="group">rmi_total</property>
+			      <signal name="activate" handler="on_plot_type_activate" last_modification_time="Tue, 11 Nov 2008 15:48:27 GMT"/>
+			    </widget>
+			  </child>
+
+			  <child>
+			    <widget class="GtkRadioMenuItem" id="rmi_mon">
+			      <property name="visible">True</property>
+			      <property name="label" translatable="yes">Monitor</property>
+			      <property name="use_underline">True</property>
+			      <property name="active">False</property>
+			      <property name="group">rmi_total</property>
+			      <signal name="activate" handler="on_plot_type_activate" last_modification_time="Tue, 11 Nov 2008 15:48:27 GMT"/>
+			    </widget>
+			  </child>
+
+			  <child>
+			    <widget class="GtkRadioMenuItem" id="rmi_split">
+			      <property name="visible">True</property>
+			      <property name="label" translatable="yes">Split Detectors</property>
+			      <property name="use_underline">True</property>
+			      <property name="active">False</property>
+			      <property name="group">rmi_total</property>
+			      <signal name="activate" handler="on_plot_type_activate" last_modification_time="Tue, 11 Nov 2008 15:48:27 GMT"/>
+			    </widget>
+			  </child>
+			</widget>
+		      </child>
+		    </widget>
+		  </child>
+
+		  <child>
+		    <widget class="GtkMenuItem" id="xaxis1">
+		      <property name="visible">True</property>
+		      <property name="label" translatable="yes">_X-axis</property>
+		      <property name="use_underline">True</property>
+
+		      <child>
+			<widget class="GtkMenu" id="xaxis1_menu">
+
+			  <child>
+			    <widget class="GtkMenuItem" id="loglin1">
+			      <property name="visible">True</property>
+			      <property name="label" translatable="yes">_Log/Lin</property>
+			      <property name="use_underline">True</property>
+			      <signal name="activate" handler="on_xaxis_loglin_activate"/>
+			    </widget>
+			  </child>
+			</widget>
+		      </child>
+		    </widget>
+		  </child>
+
+		  <child>
+		    <widget class="GtkMenuItem" id="yaxis1">
+		      <property name="visible">True</property>
+		      <property name="label" translatable="yes">_Y-axis</property>
+		      <property name="use_underline">True</property>
+
+		      <child>
+			<widget class="GtkMenu" id="yaxis1_menu">
+
+			  <child>
+			    <widget class="GtkMenuItem" id="loglin2">
+			      <property name="visible">True</property>
+			      <property name="label" translatable="yes">_Log/Lin</property>
+			      <property name="use_underline">True</property>
+			      <signal name="activate" handler="on_yaxis_loglin_activate"/>
+			    </widget>
+			  </child>
+			</widget>
+		      </child>
+		    </widget>
+		  </child>
 		</widget>
 	      </child>
 	    </widget>

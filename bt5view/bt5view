@@ -13,265 +13,265 @@ import usans
 
 
 try:
-	import pygtk
-	pygtk.require("2.0")
-	
+    import pygtk
+    pygtk.require("2.0")
+    
 except:
-	pass
+    pass
 
 try:
-	import gtk
-	import gtk.glade
+    import gtk
+    import gtk.glade
 except:
-	sys.exit(1)
+    sys.exit(1)
 
 
 
 class appGui:
-	
-	TARGETS = [('STRING', gtk.TARGET_SAME_APP, 0)]
-	
-	def __init__(self):
-		
-		gladefile = "bt5view.glade"
-		self.windowname = "win_Main"
-		self.wTree = gtk.glade.XML(gladefile, self.windowname)
+    
+    TARGETS = [('STRING', gtk.TARGET_SAME_APP, 0)]
+    
+    def __init__(self):
+        
+        gladefile = "bt5view.glade"
+        self.windowname = "win_Main"
+        self.wTree = gtk.glade.XML(gladefile, self.windowname)
 
-		event_dic = {"on_win_Main_destroy" : gtk.main_quit,
-					 "on_quit1_activate" : gtk.main_quit,
-					 "on_set_data_dir1_activate" : self.setdatadir,
-					 "on_tv_plotlist_key_press_event" : self.handle_plotlist_keypress}
+        event_dic = {"on_win_Main_destroy" : gtk.main_quit,
+                     "on_quit1_activate" : gtk.main_quit,
+                     "on_set_data_dir1_activate" : self.setdatadir,
+                     "on_tv_plotlist_key_press_event" : self.handle_plotlist_keypress}
 
-		
-		self.wTree.signal_autoconnect(event_dic)
+        
+        self.wTree.signal_autoconnect(event_dic)
 
-		# Set up file list
-		self.filelistview = self.wTree.get_widget("tv_filelist")
-		self.AddFileListColumn("Filename",0)
-		
-		self.filelist = gtk.ListStore(str)
-		self.filelistview.set_model(self.filelist)
-		self.filelist.set_sort_column_id(0,gtk.SORT_ASCENDING)
+        # Set up file list
+        self.filelistview = self.wTree.get_widget("tv_filelist")
+        self.AddFileListColumn("Filename", 0)
+        
+        self.filelist = gtk.ListStore(str)
+        self.filelistview.set_model(self.filelist)
+        self.filelist.set_sort_column_id(0, gtk.SORT_ASCENDING)
 
-		# Set up plot group list
-		self.plotlistview = self.wTree.get_widget("tv_plotlist")
-		#self.AddPlotListColumn("Dataset",0)
-		#self.AddPlotListColumn("Plot",1)
-		self.cellrendertoggle = gtk.CellRendererToggle()
-		self.cellrendertoggle.set_property('activatable', True)
-		self.AddPlotListColumns("Dataset")
+        # Set up plot group list
+        self.plotlistview = self.wTree.get_widget("tv_plotlist")
+        #self.AddPlotListColumn("Dataset",0)
+        #self.AddPlotListColumn("Plot",1)
+        self.cellrendertoggle = gtk.CellRendererToggle()
+        self.cellrendertoggle.set_property('activatable', True)
+        self.AddPlotListColumns("Dataset")
 
-		#Create TreeStore model - Name of dataset, is it plotted, loaded data for children, plottable data for parent
-		self.plotlist = gtk.TreeStore(str,'gboolean',object,object)
-		self.plotlistview.set_model(self.plotlist)
-		self.plotlist.set_sort_column_id(0,gtk.SORT_ASCENDING)
-	
-		#fill the file list
-		self.FillFileList(self.GetDirList())
-		#self.plotlist.append(None,None)
-		
-		# Set up graphing widget to display xpeek data
-		self.figure = Figure(figsize=(4,4), dpi=72)
-		self.axis = self.figure.add_subplot(111)
-		self.axis.set_xlabel('Motor position')
-		self.axis.set_ylabel('Counts')
-		#self.axis.set_title('XPeek')
-		self.axis.grid(True)
-		
-		self.canvas = FigureCanvasGTK(self.figure)
-		self.canvas.show()
-		
-		self.plotView = self.wTree.get_widget("hbox1")
-		self.plotView.pack_start(self.canvas, True, True)	
-		
-		self.filelistview.enable_model_drag_source( gtk.gdk.BUTTON1_MASK,
+        #Create TreeStore model - Name of dataset, is it plotted, loaded data for children, plottable data for parent
+        self.plotlist = gtk.TreeStore(str, 'gboolean', object, object)
+        self.plotlistview.set_model(self.plotlist)
+        self.plotlist.set_sort_column_id(0, gtk.SORT_ASCENDING)
+    
+        #fill the file list
+        self.FillFileList(self.GetDirList())
+        #self.plotlist.append(None,None)
+        
+        # Set up graphing widget to display xpeek data
+        self.figure = Figure(figsize=(4, 4), dpi=72)
+        self.axis = self.figure.add_subplot(111)
+        self.axis.set_xlabel('Motor position')
+        self.axis.set_ylabel('Counts')
+        #self.axis.set_title('XPeek')
+        self.axis.grid(True)
+        
+        self.canvas = FigureCanvasGTK(self.figure)
+        self.canvas.show()
+        
+        self.plotView = self.wTree.get_widget("hbox1")
+        self.plotView.pack_start(self.canvas, True, True)    
+        
+        self.filelistview.enable_model_drag_source(gtk.gdk.BUTTON1_MASK,
                                                   self.TARGETS,
                                                    gtk.gdk.ACTION_COPY)
-		self.plotlistview.enable_model_drag_dest(self.TARGETS,
+        self.plotlistview.enable_model_drag_dest(self.TARGETS,
                                                gtk.gdk.ACTION_COPY)
 
-		self.filelistview.connect("drag_data_get", self.dnd_data_getdata)
-		self.plotlistview.connect("drag_data_received",self.dnd_data_received)
-		
-		#Handle toggling of checkboxes in plot list
-		self.cellrendertoggle.connect("toggled", self.handle_toggled, (self.plotlistview.get_model(), 1))
-	
-		
-	def AddFileListColumn(self, title, columnId):
-		"""This function adds a column to the list view.
-		First it create the gtk.TreeViewColumn and then set
-		some needed properties"""
-						
-		column = gtk.TreeViewColumn(title, gtk.CellRendererText()
-			, text=columnId)
-		column.set_resizable(True)		
-		column.set_sort_column_id(columnId)
-		self.filelistview.append_column(column)
-		return
-		
-	def AddPlotListColumns(self, title):
-		column = gtk.TreeViewColumn(title, gtk.CellRendererText()
-			, text=0)
-		#column.set_resizable(True)		
-		column.set_sizing(gtk.TREE_VIEW_COLUMN_FIXED)
-		column.set_fixed_width(230)
-		column.set_sort_column_id(0)
-		#column.set_min_width(200)
-		self.plotlistview.append_column(column)
+        self.filelistview.connect("drag_data_get", self.dnd_data_getdata)
+        self.plotlistview.connect("drag_data_received", self.dnd_data_received)
+        
+        #Handle toggling of checkboxes in plot list
+        self.cellrendertoggle.connect("toggled", self.handle_toggled, (self.plotlistview.get_model(), 1))
+    
+        
+    def AddFileListColumn(self, title, columnId):
+        """This function adds a column to the list view.
+        First it create the gtk.TreeViewColumn and then set
+        some needed properties"""
+                        
+        column = gtk.TreeViewColumn(title, gtk.CellRendererText()
+            , text=columnId)
+        column.set_resizable(True)        
+        column.set_sort_column_id(columnId)
+        self.filelistview.append_column(column)
+        return
+        
+    def AddPlotListColumns(self, title):
+        column = gtk.TreeViewColumn(title, gtk.CellRendererText()
+            , text=0)
+        #column.set_resizable(True)        
+        column.set_sizing(gtk.TREE_VIEW_COLUMN_FIXED)
+        column.set_fixed_width(230)
+        column.set_sort_column_id(0)
+        #column.set_min_width(200)
+        self.plotlistview.append_column(column)
 
-		column = gtk.TreeViewColumn('',self.cellrendertoggle, active=1)
-		column.set_sizing(gtk.TREE_VIEW_COLUMN_FIXED)
-		#column.set_min_width(20)
-		#column.set_max_width(20)
-		#column.set_fixed_width(20)
-		#column.set_resizable(False)
-		self.plotlistview.append_column(column)
-		return
+        column = gtk.TreeViewColumn('', self.cellrendertoggle, active=1)
+        column.set_sizing(gtk.TREE_VIEW_COLUMN_FIXED)
+        #column.set_min_width(20)
+        #column.set_max_width(20)
+        #column.set_fixed_width(20)
+        #column.set_resizable(False)
+        self.plotlistview.append_column(column)
+        return
 
-	def handle_toggled(self, cell, path, user_data):
-		model, column = user_data
-		model[path][column] = not model[path][column]
+    def handle_toggled(self, cell, path, user_data):
+        model, column = user_data
+        model[path][column] = not model[path][column]
 
-		return
-	
-	def GetDirList(self):
-		dirlist = os.listdir(os.getcwd())
-		
-		return dirlist
-		
-	
-	def FillFileList(self,filenames):
-		self.filelist.clear()
-		for filename in filenames:
-			self.filelist.append([filename])
-		return
-			
+        return
+    
+    def GetDirList(self):
+        dirlist = os.listdir(os.getcwd())
+        
+        return dirlist
+        
+    
+    def FillFileList(self, filenames):
+        self.filelist.clear()
+        for filename in filenames:
+            self.filelist.append([filename])
+        return
+            
 
-	def dnd_data_received(self, treeview, context, x, y, selection, info, etime):
-		model = treeview.get_model()
-		data = selection.data
-		#Get USANS data from file
-		detdata = usans.getBT5DataFromFile(data)
-		drop_info = treeview.get_dest_row_at_pos(x, y)
-		if drop_info:
-			#Other entries exist already
-			path, position = drop_info
-			iter = model.get_iter(path)
-			if model.iter_depth(iter) > 0:
-				#Adding to exisiting dataset
-				parent = model.iter_parent(iter)
-				if position == gtk.TREE_VIEW_DROP_INTO_OR_AFTER or position == gtk.TREE_VIEW_DROP_AFTER:
-					titer = model.insert_after(parent,iter,[data,0,detdata,0])
-				elif position == gtk.TREE_VIEW_DROP_INTO_OR_BEFORE or position == gtk.TREE_VIEW_DROP_BEFORE:
-					titer = model.insert_before(parent,iter,[data,0,detdata,0])
-			else:
-				#New top level entry
-				if position == gtk.TREE_VIEW_DROP_INTO_OR_AFTER or position == gtk.TREE_VIEW_DROP_INTO_OR_BEFORE:
-					titer = model.insert_after(iter, None, [data,0,detdata,0])
-				else:
-				#Not sure that this should ever get called....
-					iter = model.append(None,[data,0,0,0])
-					titer = model.append(iter,[data,0,detdata,0])
-		else:
-			#First entry
-			iter = model.append(None,[data[:5],0,0,0])
-			titer = model.append(iter,[data,0,detdata,0])
-		
-		print titer
-					
-		self.do_plot(model,titer, "total")
+    def dnd_data_received(self, treeview, context, x, y, selection, info, etime):
+        model = treeview.get_model()
+        data = selection.data
+        #Get USANS data from file
+        detdata = usans.getBT5DataFromFile(data)
+        drop_info = treeview.get_dest_row_at_pos(x, y)
+        if drop_info:
+            #Other entries exist already
+            path, position = drop_info
+            iter = model.get_iter(path)
+            if model.iter_depth(iter) > 0:
+                #Adding to exisiting dataset
+                parent = model.iter_parent(iter)
+                if position == gtk.TREE_VIEW_DROP_INTO_OR_AFTER or position == gtk.TREE_VIEW_DROP_AFTER:
+                    titer = model.insert_after(parent, iter, [data, 0, detdata, 0])
+                elif position == gtk.TREE_VIEW_DROP_INTO_OR_BEFORE or position == gtk.TREE_VIEW_DROP_BEFORE:
+                    titer = model.insert_before(parent, iter, [data, 0, detdata, 0])
+            else:
+                #New top level entry
+                if position == gtk.TREE_VIEW_DROP_INTO_OR_AFTER or position == gtk.TREE_VIEW_DROP_INTO_OR_BEFORE:
+                    titer = model.insert_after(iter, None, [data, 0, detdata, 0])
+                else:
+                #Not sure that this should ever get called....
+                    iter = model.append(None, [data, 0, 0, 0])
+                    titer = model.append(iter, [data, 0, detdata, 0])
+        else:
+            #First entry
+            iter = model.append(None, [data[:5], 0, 0, 0])
+            titer = model.append(iter, [data, 0, detdata, 0])
+        
+        print titer
+                    
+        self.do_plot(model, titer, "total")
 
-		return
-	
-	def do_plot(self, model, iter, type):
-		#Handle plotting - ignore type for the moment, only plot total counts
-		path = model.get_path(iter)
-		#Always passing a child, but let's check anyway	
-		if model.iter_depth(iter) > 0:
-			parent = model.iter_parent(iter)	
-			ppath = model.get_path(parent)
-			#Check to see if parent is already plotted
-			if (model[ppath][1]):
-				print "Parent plotted"	
-				#If plotted, add new data to existing plotted dataset and set checkbox
-				self.make_plottable_dataset(model, ppath, type)
-				model[path][1] = 1
-			else:
-				print "Parent not plotted"
-				if(model.iter_n_children(iter) > 1): 
-					print "has siblings"
-					#If not plotted and there are siblings, add new data to dataset and set checkbox but do not plot
-					self.make_plottable_dataset(model, ppath, type)
-					model[path][1] = 1
-				else:
-					#If parent not plotted and there are no siblings, create plottable dataset, plot and set checkbox
-					self.make_plottable_dataset(model, ppath, type)
-					print model[ppath][3]
-					self.axis.plot(model[ppath][3][0], model[ppath][3][1])
-					self.figure.draw()
-					model[path][1] = 1
+        return
+    
+    def do_plot(self, model, iter, type):
+        #Handle plotting - ignore type for the moment, only plot total counts
+        path = model.get_path(iter)
+        #Always passing a child, but let's check anyway    
+        if model.iter_depth(iter) > 0:
+            parent = model.iter_parent(iter)    
+            ppath = model.get_path(parent)
+            #Check to see if parent is already plotted
+            if (model[ppath][1]):
+                print "Parent plotted"    
+                #If plotted, add new data to existing plotted dataset and set checkbox
+                self.make_plottable_dataset(model, ppath, type)
+                model[path][1] = 1
+            else:
+                print "Parent not plotted"
+                if(model.iter_n_children(iter) > 1): 
+                    print "has siblings"
+                    #If not plotted and there are siblings, add new data to dataset and set checkbox but do not plot
+                    self.make_plottable_dataset(model, ppath, type)
+                    model[path][1] = 1
+                else:
+                    #If parent not plotted and there are no siblings, create plottable dataset, plot and set checkbox
+                    self.make_plottable_dataset(model, ppath, type)
+                    print model[ppath][3]
+                    self.axis.plot(model[ppath][3][0], model[ppath][3][1])
+                    self.figure.draw()
+                    model[path][1] = 1
 
 
-		return
+        return
 
-	def make_plottable_dataset(self,model,path,type):
-		#Will use select here, but for now ignore type and just do total		
-		piter = model.get_iter(path)
-		xdata = []
-		ydata = []
+    def make_plottable_dataset(self, model, path, type):
+        #Will use select here, but for now ignore type and just do total        
+        piter = model.get_iter(path)
+        xdata = []
+        ydata = []
 
-		for iter in range(0,model.iter_n_children(piter)): 
-			#for each child that has the plot flag set add keys to xdata and summed values to ydata
-			cpath = model.get_path(model.iter_nth_child(piter,iter))
-			data = model[cpath][2]
-			mvals = data.keys()
-			mvals.sort()
-			for mval in mvals:
-				xdata.append(mval)
-				ydata.append(data[mval][1]+data[mval][2]+data[mval][4]+data[mval][5]+data[mval][6])
+        for iter in range(0, model.iter_n_children(piter)): 
+            #for each child that has the plot flag set add keys to xdata and summed values to ydata
+            cpath = model.get_path(model.iter_nth_child(piter, iter))
+            data = model[cpath][2]
+            mvals = data.keys()
+            mvals.sort()
+            for mval in mvals:
+                xdata.append(mval)
+                ydata.append(data[mval][1] + data[mval][2] + data[mval][4] + data[mval][5] + data[mval][6])
 
-		print xdata
-		print ydata
+        print xdata
+        print ydata
 
-		model[path][3] = [xdata,ydata]	
-		return 
+        model[path][3] = [xdata, ydata]    
+        return 
 
-	def dnd_data_getdata(self, treeview, context, selection, target_id, etime):
-		treeselection = treeview.get_selection()
-		model, iter = treeselection.get_selected()
-		data = model.get_value(iter, 0)
-		selection.set('STRING', 8, data)
-		return
-	
-	def setdatadir(self, widget):
-		chooser = gtk.FileChooserDialog(title="Select Data Directory",action=gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
-                                  buttons=(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_OPEN,gtk.RESPONSE_OK))
-		chooser.set_default_response(gtk.RESPONSE_OK)
-		chooser.set_current_folder(os.getcwd())
-		response = chooser.run()
-		if response == gtk.RESPONSE_OK:
-			os.chdir(chooser.get_filename())
-			self.FillFileList(self.GetDirList())
-		chooser.destroy()
+    def dnd_data_getdata(self, treeview, context, selection, target_id, etime):
+        treeselection = treeview.get_selection()
+        model, iter = treeselection.get_selected()
+        data = model.get_value(iter, 0)
+        selection.set('STRING', 8, data)
+        return
+    
+    def setdatadir(self, widget):
+        chooser = gtk.FileChooserDialog(title="Select Data Directory", action=gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
+                                  buttons=(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OPEN, gtk.RESPONSE_OK))
+        chooser.set_default_response(gtk.RESPONSE_OK)
+        chooser.set_current_folder(os.getcwd())
+        response = chooser.run()
+        if response == gtk.RESPONSE_OK:
+            os.chdir(chooser.get_filename())
+            self.FillFileList(self.GetDirList())
+        chooser.destroy()
 
-	def handle_plotlist_keypress(self,widget,event):
-		keyname = gtk.gdk.keyval_name(event.keyval)
-		print keyname
-		if keyname in ["Delete", "BackSpace"]:
-			self.deleteplotlistentry(widget)
-		if keyname in ["Down"]:
-			(path,),focus = widget.get_cursor()
-			widget.set_cursor(path+1)
-		if keyname in ["Up"]:
-			(path,),focus = widget.get_cursor()
-			widget.set_cursor(path-1)
-		return True
-		
-	def deleteplotlistentry(self, treeview):
-		treeselection = treeview.get_selection()
-		model, iter = treeselection.get_selected()
-		model.remove(iter)
-		return
-		
+    def handle_plotlist_keypress(self, widget, event):
+        keyname = gtk.gdk.keyval_name(event.keyval)
+        print keyname
+        if keyname in ["Delete", "BackSpace"]:
+            self.deleteplotlistentry(widget)
+        if keyname in ["Down"]:
+            (path,), focus = widget.get_cursor()
+            widget.set_cursor(path + 1)
+        if keyname in ["Up"]:
+            (path,), focus = widget.get_cursor()
+            widget.set_cursor(path - 1)
+        return True
+        
+    def deleteplotlistentry(self, treeview):
+        treeselection = treeview.get_selection()
+        model, iter = treeselection.get_selected()
+        model.remove(iter)
+        return
+        
 app = appGui()
 gtk.main()
