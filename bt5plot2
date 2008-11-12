@@ -155,8 +155,8 @@ class appGui:
         else:
             model[path][4] = self.axis.plot(model[path][3][0],model[path][3][1], 'bo')
         
-        self.axis.autoscale_view()
-        self.canvas.draw()
+        self.rescale_and_redraw()
+        #self.canvas.draw()
         return
 
     def make_plottable_dataset(self, model, path, type):
@@ -251,7 +251,10 @@ class appGui:
 
     	for line in model[path][4]:
     		self.axis.lines.remove(line)
-    		
+    	
+    	
+    	
+    	#self.canvas.draw()	
         self.rescale_and_redraw()
         return
 
@@ -293,18 +296,31 @@ class appGui:
         ydata = []
 
         for line in self.axis.lines:
-             xdata.extend(line.get_xdata())
-             ydata.extend(line.get_ydata())
+        	if self.axis.get_xscale() == 'log':
+        		xdata.extend([xval for xval in line.get_xdata() if xval > 0])
+        	else:
+        		xdata.extend(line.get_xdata())
+        	if self.axis.get_yscale() == 'log':
+        		ydata.extend([xval for xval in line.get_ydata() if xval > 0])
+        	else:
+        		ydata.extend(line.get_ydata())
+      
+        #set limits
+        xmin = float(min(xdata))
+        xmax = float(max(xdata))
+        ymin = float(min(ydata))
+        ymax = float(max(ydata))	
 
-        xmin = float(min(xdata)*0.95)
-        xmax = float(max(xdata)*1.05)
-        ymin = float(min(ydata)*0.95)
-        ymax = float(max(ydata)*1.05)	
-
+        #adjust for size of markers (sort of)
+        xmin = xmin - 0.1*abs(xmin)
+        xmax = xmax + 0.1*abs(xmax)
+        ymin = ymin - 0.1*abs(ymin)
+        ymax = ymax + 0.1*abs(ymax)
+                
         self.axis.set_xlim(xmin,xmax)
         self.axis.set_ylim(ymin,ymax)
         
-        self.axis.autoscale_view()
+        #self.axis.autoscale_view()
         self.canvas.draw()
 
         return

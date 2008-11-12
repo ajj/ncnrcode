@@ -33,7 +33,7 @@ def getBT5DataFromFile(fileName):
     (metadata['filename'], metadata['datetime'],
     metadata['mon'],metadata['prefactor'],
     metadata['base'],metadata['numpnts'],
-    metadata['type']) = (mdtmp[0],' '.join(mdtmp[1:5]),mdtmp[6],mdtmp[7],mdtmp[8],mdtmp[9],mdtmp[10])
+    metadata['type']) = (mdtmp[0],' '.join(mdtmp[1:5]),float(mdtmp[6]),int(mdtmp[7]),mdtmp[8],int(mdtmp[9]),mdtmp[10])
     
     #Comment string
     metadata['title'] = inputdata[2].strip()
@@ -48,7 +48,7 @@ def getBT5DataFromFile(fileName):
     metadata['motorvals'] = motlist
     
     for index in range(13, len(inputdata), 2):
-        detdata[inputdata[index].split()[0]] = inputdata[index + 1].split(',')    
+        detdata[float(inputdata[index].split()[0])] = inputdata[index + 1].split(',')    
 
     for key in detdata.keys():
         for val in range(0, len(detdata[key])):
