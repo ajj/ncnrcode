@@ -116,7 +116,8 @@ class appGui:
         self.filelist.clear()
         for filename in filenames:
             data,metadata = usans.getBT5DataFromFile(filename)
-            self.filelist.append([filename, 0, (data,metadata), 0, 0])
+            if data != 0:
+                self.filelist.append([filename, 0, (data,metadata), 0, 0])
         return
             
 
