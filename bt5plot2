@@ -82,6 +82,10 @@ class appGui:
         self.plotView = self.wTree.get_widget("hbox1")
         self.plotView.pack_start(self.canvas, True, True)    
         
+        self.metadataView = self.wTree.get_widget("tv_metadata")
+        self.mdlist = gtk.ListStore(str,str)
+        
+        
         #self.filelistview.enable_model_drag_source( gtk.gdk.BUTTON1_MASK,
                 #                                  self.TARGETS,
                 #                                   gtk.gdk.ACTION_COPY)
