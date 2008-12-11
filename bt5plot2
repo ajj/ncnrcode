@@ -3,6 +3,7 @@
 import sys
 import os
 import matplotlib
+import numpy
 matplotlib.use('GTK')
 
 from matplotlib.figure import Figure
@@ -77,6 +78,7 @@ class appGui:
         self.axis.grid(True)
         
         self.canvas = FigureCanvasGTK(self.figure)
+        self.figure.canvas.mpl_connect('pick_event',self.handle_plot_click)
         self.canvas.show()
         
         self.plotView = self.wTree.get_widget("hbox1")
@@ -84,7 +86,7 @@ class appGui:
         
         self.metadataView = self.wTree.get_widget("tv_metadata")
         self.mdlist = gtk.ListStore(str,str)
-        
+       
         
         #self.filelistview.enable_model_drag_source( gtk.gdk.BUTTON1_MASK,
                 #                                  self.TARGETS,
@@ -158,7 +160,7 @@ class appGui:
 											 model[path][3][0],model[path][3][4], 'o',
 											 model[path][3][0],model[path][3][5], 'o')
         else:
-            model[path][4] = self.axis.plot(model[path][3][0],model[path][3][1], 'bo')
+            model[path][4] = self.axis.plot(model[path][3][0],model[path][3][1], 'bo', picker=5)
         
         self.rescale_and_redraw()
         #self.canvas.draw()
@@ -257,10 +259,11 @@ class appGui:
     	for line in model[path][4]:
     		self.axis.lines.remove(line)
     	
-    	
-    	
-    	#self.canvas.draw()	
-        self.rescale_and_redraw()
+	if (len(self.axis.lines) > 0):
+	        self.rescale_and_redraw()
+    	else:
+		self.canvas.draw()	
+
         return
 
     def handle_xaxis_loglin(self, widget):
@@ -291,7 +294,7 @@ class appGui:
     	    	
     	if widget.get_active():
     		self.plottype = widget.get_name().split('_')[1]
-    		print self.plottype
+    		#print self.plottype
     		
     	return
     	
@@ -329,6 +332,14 @@ class appGui:
         self.canvas.draw()
 
         return
+
+    def handle_plot_click(self,event):
+        if isinstance(event.artist, matplotlib.lines.Line2D):
+            pickedline = event.artist
+            xdata = pickedline.get_xdata()
+            ydata = pickedline.get_ydata()
+            ind = event.ind
+            print 'Plot Click: ',zip(numpy.take(xdata,ind), numpy.take(ydata,ind))
 
 app = appGui()
 gtk.main()

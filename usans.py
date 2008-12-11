@@ -22,7 +22,7 @@ def getBT5DataFromFile(fileName):
     metadata = {}
     motlist = []
 
-    print "File: ",fileName    
+    #print "File: ",fileName    
     inputfile = open(fileName, "r")
 
     inputdata = inputfile.readlines()
