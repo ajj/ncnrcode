@@ -42,7 +42,8 @@ class appGui:
                      "on_set_data_dir1_activate" : self.setdatadir,
                      "on_xaxis_loglin_activate" : self.handle_xaxis_loglin,
                      "on_yaxis_loglin_activate" : self.handle_yaxis_loglin,
-                     "on_plot_type_activate" : self.handle_plot_type_change}
+                     "on_plot_type_activate" : self.handle_plot_type_change,
+                     "on_btn_ClearPlot_clicked" : self.handle_clearplot}
     #                 "on_tv_plotlist_key_press_event" : self.handle_plotlist_keypress}
 
         #This is a bit clunky, but never mind.
@@ -121,10 +122,8 @@ class appGui:
     def FillFileList(self, filenames):
         self.filelist.clear()
         for filename in filenames:
-            data,metadata = usans.getBT5DataFromFile(filename)
-            if data != 0:
-                self.filelist.append([filename, 0, (data,metadata), 0, 0])
-
+            if usans.isBT5Data(filename):
+                self.filelist.append([filename, 0, 0, 0, 0])
         return
             
     def RefreshFileList(self):
@@ -147,6 +146,9 @@ class appGui:
         model[path][1] = not model[path][1]
 
         if model[path][1]:
+            #load data
+            data,metadata = usans.getBT5DataFromFile(model[path][0])
+            model[path][2] = (data,metadata)
             #add plot
             self.add_plot(model, path)
         else:
@@ -174,7 +176,7 @@ class appGui:
     def make_plottable_dataset(self, model, path, type):
          
          data,metadata = model[path][2]
-         
+                  
          if type == 'total':
              #generate totals
              xdata = []
@@ -202,12 +204,12 @@ class appGui:
              	#Counting in TIME base, so normalize by seconds
              	cnttime = metadata['mon']
              	for mval in mvals:
-             		ydata.append((data[mval][1] + data[mval][2] + data[mval][4] + data[mval][5] + data[mval][6])/cnttime)
+                     ydata.append((data[mval][1] + data[mval][2] + data[mval][4] + data[mval][5] + data[mval][6])/cnttime)
              else:
              	#Must be counting in monitor base so normalize by monitor
              	moncts = metadata['mon']
                 for mval in mvals:
-             		ydata.append((data[mval][1] + data[mval][2] + data[mval][4] + data[mval][5] + data[mval][6])/cnttime)
+                    ydata.append((data[mval][1] + data[mval][2] + data[mval][4] + data[mval][5] + data[mval][6])/cnttime)
              
              model[path][3] = [xdata, ydata]
              
@@ -264,10 +266,10 @@ class appGui:
     	for line in model[path][4]:
     		self.axis.lines.remove(line)
     	
-	if (len(self.axis.lines) > 0):
+        if (len(self.axis.lines) > 0):
 	        self.rescale_and_redraw()
     	else:
-		self.canvas.draw()	
+            self.canvas.draw()	
 
         return
 
@@ -292,7 +294,7 @@ class appGui:
         else:
             self.axis.set_yscale('log')        
 
-        self.rescale_and_redraw()
+        self.canvas.draw()
         return
        
     def handle_plot_type_change(self,widget):
@@ -303,6 +305,21 @@ class appGui:
     		
     	return
     	
+    def handle_clearplot(self,widget):
+    
+        model = self.filelistview.get_model()
+        iter = model.iter_children(None)
+        while iter:
+            path = model.get_path(iter)
+            if model[path][1] != 0:
+                for line in model[path][4]:
+                    self.axis.lines.remove(line)   
+                    model[path][1] = not model[path][1]         
+            iter = model.iter_next(iter)
+        
+        self.canvas.draw()
+        return 
+        
     def rescale_and_redraw(self):
 
         xdata = []
