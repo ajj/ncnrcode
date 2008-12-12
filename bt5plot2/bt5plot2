@@ -81,7 +81,7 @@ class appGui:
         self.figure.canvas.mpl_connect('pick_event',self.handle_plot_click)
         self.canvas.show()
         
-        self.plotView = self.wTree.get_widget("hbox1")
+        self.plotView = self.wTree.get_widget("vbox4")
         self.plotView.pack_start(self.canvas, True, True)    
         
         self.metadataView = self.wTree.get_widget("tv_metadata")
@@ -124,8 +124,13 @@ class appGui:
             data,metadata = usans.getBT5DataFromFile(filename)
             if data != 0:
                 self.filelist.append([filename, 0, (data,metadata), 0, 0])
+
         return
             
+    def RefreshFileList(self):
+        
+        for path in self.filelist:
+            print self.filelist[path][0]
 
     def setdatadir(self, widget):
         chooser = gtk.FileChooserDialog(title="Select Data Directory", action=gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
