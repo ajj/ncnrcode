@@ -13,6 +13,22 @@ def numeric_compare(x, y):
     else: # x>y
         return 1 
 
+def isBT5Data(fileName):
+
+    inputfile = open(fileName, "r")
+    inputdata = inputfile.readlines()
+    
+    if len(inputdata) < 2:
+        inputfile.close()
+        return 0
+    elif inputdata[1].find('Filename') > 0:
+        inputfile.close()
+        return 1
+    else:
+        inputfile.close()
+        return 0
+
+
 def getBT5DataFromFile(fileName):
     '''
     Takes a filename and returns a dictionary of the detector values
@@ -22,25 +38,21 @@ def getBT5DataFromFile(fileName):
     metadata = {}
     motlist = []
 
-    #print "File: ",fileName    
-    inputfile = open(fileName, "r")
+    if isBT5Data(fileName):
 
-    inputdata = inputfile.readlines()
+        #print "File: ",fileName    
+        inputfile = open(fileName, "r")
 
-    if len(inputdata) < 2:
-        inputfile.close()
-        return 0,0
+        inputdata = inputfile.readlines()
 
-    if inputdata[1].find('Filename') > 0:
-
-        mdtmp = inputdata[0].replace("'","")
+        mdtmp = inputdata[0].replace("'", "")
         mdtmp = mdtmp.split()
     
         #Sundry metadata about run settings
         (metadata['filename'], metadata['datetime'],
-        metadata['mon'],metadata['prefactor'],
-        metadata['base'],metadata['numpnts'],
-        metadata['type']) = (mdtmp[0],' '.join(mdtmp[1:5]),float(mdtmp[6]),int(mdtmp[7]),mdtmp[8],int(mdtmp[9]),mdtmp[10])
+         metadata['mon'], metadata['prefactor'],
+         metadata['base'], metadata['numpnts'],
+         metadata['type']) = (mdtmp[0], ' '.join(mdtmp[1:5]), float(mdtmp[6]), int(mdtmp[7]), mdtmp[8], int(mdtmp[9]), mdtmp[10])
     
         #Comment string
         metadata['title'] = inputdata[2].strip()
@@ -62,10 +74,9 @@ def getBT5DataFromFile(fileName):
                 detdata[key][val] = int(detdata[key][val])
 
         inputfile.close()
-        return detdata,metadata
+        return detdata, metadata
 
     else:
-        inputfile.close()
         return 0,0
 
 def printBT5DetData(detdata):
