@@ -43,7 +43,8 @@ class appGui:
                      "on_xaxis_loglin_activate" : self.handle_xaxis_loglin,
                      "on_yaxis_loglin_activate" : self.handle_yaxis_loglin,
                      "on_plot_type_activate" : self.handle_plot_type_change,
-                     "on_btn_ClearPlot_clicked" : self.handle_clearplot}
+                     "on_btn_ClearPlot_clicked" : self.handle_clearplot,
+		     "on_btn_RefreshList_clicked" : self.handle_refreshlist}
     #                 "on_tv_plotlist_key_press_event" : self.handle_plotlist_keypress}
 
         #This is a bit clunky, but never mind.
@@ -126,7 +127,7 @@ class appGui:
                 self.filelist.append([filename, 0, 0, 0, 0])
         return
             
-    def RefreshFileList(self):
+    def handle_RefreshList(self,widget):
         
         for path in self.filelist:
             print self.filelist[path][0]
@@ -316,6 +317,10 @@ class appGui:
                     self.axis.lines.remove(line)   
                     model[path][1] = not model[path][1]         
             iter = model.iter_next(iter)
+
+        for line in self.axis.lines:
+             print line
+             self.axis.lines.remove(line)
         
         self.canvas.draw()
         return 
