@@ -2,6 +2,7 @@
 
 import sys
 import os
+import re
 import matplotlib
 import numpy
 matplotlib.use('GTK')
@@ -44,7 +45,8 @@ class appGui:
                      "on_yaxis_loglin_activate" : self.handle_yaxis_loglin,
                      "on_plot_type_activate" : self.handle_plot_type_change,
                      "on_btn_ClearPlot_clicked" : self.handle_clearplot,
-		     "on_btn_RefreshList_clicked" : self.handle_refreshlist}
+                     "on_btn_Refresh_clicked" : self.handle_refreshlist,
+                     "on_btn_Filter_clicked" : self.handle_filter}
     #                 "on_tv_plotlist_key_press_event" : self.handle_plotlist_keypress}
 
         #This is a bit clunky, but never mind.
@@ -58,16 +60,24 @@ class appGui:
         
         self.filelist = gtk.ListStore(str, 'gboolean', object, object, object)
         self.filelist.set_sort_column_id(0, gtk.SORT_ASCENDING)
-        self.filelistview.set_model(self.filelist)
+
+        # Set up filtering of file list
+        self.filter_entry = self.wTree.get_widget("ent_filter")
+        self.filter_string = []
+        self.filter_string.append(self.filter_entry.get_text())
+        self.filelistfilter = self.filelist.filter_new()
+        self.filelistfilter.set_visible_func(self.filter_filelist,self.filter_string)
+
+        self.filelistview.set_model(self.filelistfilter)
 
         self.cellrenderertoggle = gtk.CellRendererToggle()
         self.cellrenderertoggle.set_property('activatable', True)
-        self.cellrenderertoggle.connect("toggled", self.handle_plot_toggle, self.filelist)
+        self.cellrenderertoggle.connect("toggled", self.handle_plot_toggle, self.filelistfilter)
     
         self.AddFileListColumns()
 
         #fill the file list
-        self.FillFileList(self.GetDirList())
+        self.FillFileList(self.GetBT5DirList())
 
         # Set up graphing widget to display xpeek data
         self.figure = Figure(figsize=(4, 4), dpi=72)
@@ -102,8 +112,7 @@ class appGui:
         First it create the gtk.TreeViewColumn and then set
         some needed properties"""
                         
-        column = gtk.TreeViewColumn('Filename', gtk.CellRendererText()
-            , text=0)
+        column = gtk.TreeViewColumn('Filename', gtk.CellRendererText(), text=0)
         column.set_resizable(True)        
         column.set_sort_column_id(0)
         self.filelistview.append_column(column)
@@ -112,10 +121,13 @@ class appGui:
         self.filelistview.append_column(column)
         return
         
-    def GetDirList(self):
+    def GetBT5DirList(self):
+        """Function to parse the directory listing of the current working directory
+             and create a list of filenames that are BT5 data files"""
+             
         dirlist = os.listdir(os.getcwd())
         
-        bt5list = [ x for x in dirlist if x.find('.bt5') > 0]
+        bt5list = [ x for x in dirlist if (x.find('.bt5') > 0 and usans.isBT5Data(x))]
         
         return bt5list
         
@@ -123,16 +135,72 @@ class appGui:
     def FillFileList(self, filenames):
         self.filelist.clear()
         for filename in filenames:
-            if usans.isBT5Data(filename):
                 self.filelist.append([filename, 0, 0, 0, 0])
         return
             
-    def handle_RefreshList(self,widget):
+    def RefreshFileList(self,filenames):        
+        #print len(filenames)
         
-        for path in self.filelist:
-            print self.filelist[path][0]
+        deletelist = []
+        
+        treestore = self.filelistview.get_model()
+        treestore.foreach(self.filelist_match_filename, (filenames,deletelist))
+          
+        for filename in filenames:
+            self.filelist.append([filename, 0, 0, 0, 0])
+        
+        deletelist.reverse()
+        for path in deletelist:
+            treestore.remove(treestore.get_iter(path))
+        #print len(filenames)    
+        return
+
+    def filelist_match_filename(self, model, path, iter, data):
+        
+        mval = model.get_value(iter,0)
+        
+        if mval in data[0]:
+            del data[0][data[0].index(mval)]
+        else:
+            data[1].append(path)
+            
+        return False
+    
+    def handle_refreshlist(self,widget):
+
+        self.RefreshFileList(self.GetBT5DirList())
+        
+        return
+
+    def filter_filelist(self, model, iter, data):
+        
+        if model.get_value(iter,0):        
+            match = re.match(data[0],model.get_value(iter,0))
+        else:
+            match = None
+        
+        if match is None:
+            return False
+        else:
+            return True
+        
+    def handle_filter(self,widget):
+        
+        print "Filtering"
+        del self.filter_string[:]
+        self.filter_string.append(self.filter_entry.get_text())
+        print self.filter_string[0]
+        self.filelistfilter.refilter()
+        
+        return
 
     def setdatadir(self, widget):
+        
+        #Clear plot before selecting new folder
+        #This is a bit clunky, but it avoids a lot of pain for the moment
+        
+        self.clearplot()
+        
         chooser = gtk.FileChooserDialog(title="Select Data Directory", action=gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
                                   buttons=(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OPEN, gtk.RESPONSE_OK))
         chooser.set_default_response(gtk.RESPONSE_OK)
@@ -140,10 +208,12 @@ class appGui:
         response = chooser.run()
         if response == gtk.RESPONSE_OK:
             os.chdir(chooser.get_filename())
-            self.FillFileList(self.GetDirList())
+            self.FillFileList(self.GetBT5DirList())
         chooser.destroy()
 
-    def handle_plot_toggle(self, cell, path, model):
+    def handle_plot_toggle(self, filter_cell, filter_path, filter_model):
+        model = filter_model.get_model()
+        path = filter_model.convert_path_to_child_path(filter_path)
         model[path][1] = not model[path][1]
 
         if model[path][1]:
@@ -262,8 +332,8 @@ class appGui:
              
          return
 
-    def remove_plot(self, model, path):
-
+    def remove_plot(self, filter_model, filter_path):
+ 
     	for line in model[path][4]:
     		self.axis.lines.remove(line)
     	
@@ -307,8 +377,14 @@ class appGui:
     	return
     	
     def handle_clearplot(self,widget):
+        
+        self.clearplot()
+        
+        return
+        
     
-        model = self.filelistview.get_model()
+    def clearplot(self):
+        model = self.filelistview.get_model().get_model()
         iter = model.iter_children(None)
         while iter:
             path = model.get_path(iter)
@@ -318,9 +394,9 @@ class appGui:
                     model[path][1] = not model[path][1]         
             iter = model.iter_next(iter)
 
-        for line in self.axis.lines:
-             print line
-             self.axis.lines.remove(line)
+        #Remove any lines left over - shouldn't be any, but let's tidy up
+        #for line in self.axis.lines:
+             #self.axis.lines.remove(line)
         
         self.canvas.draw()
         return 
