@@ -332,7 +332,7 @@ class appGui:
              
          return
 
-    def remove_plot(self, filter_model, filter_path):
+    def remove_plot(self, model, path):
  
     	for line in model[path][4]:
     		self.axis.lines.remove(line)
