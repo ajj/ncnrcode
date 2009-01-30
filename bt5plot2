@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python 
 
 import sys
 import os
@@ -12,6 +12,7 @@ from matplotlib.axes import Subplot
 from matplotlib.backends.backend_gtk import FigureCanvasGTK, NavigationToolbar
 
 import usans
+from BT5DataSet import BT5DataSet
 
 try:
     import pygtk
@@ -25,8 +26,6 @@ try:
     import gtk.glade
 except:
     sys.exit(1)
-
-
 
 class appGui:
     
@@ -58,7 +57,7 @@ class appGui:
         # Set up file list
         self.filelistview = self.wTree.get_widget("tv_filelist")
         
-        self.filelist = gtk.ListStore(str, 'gboolean', object, object, object)
+        self.filelist = gtk.ListStore(str, 'gboolean', object)
         self.filelist.set_sort_column_id(0, gtk.SORT_ASCENDING)
 
         # Set up filtering of file list
@@ -77,7 +76,7 @@ class appGui:
         self.AddFileListColumns()
 
         #fill the file list
-        self.FillFileList(self.GetBT5DirList())
+        self.FillFileList(usans.GetBT5DirList())
 
         # Set up graphing widget to display xpeek data
         self.figure = Figure(figsize=(4, 4), dpi=72)
@@ -98,13 +97,6 @@ class appGui:
         
         self.metadataView = self.wTree.get_widget("tv_metadata")
         self.mdlist = gtk.ListStore(str,str)
-       
-        
-        #self.filelistview.enable_model_drag_source( gtk.gdk.BUTTON1_MASK,
-                #                                  self.TARGETS,
-                #                                   gtk.gdk.ACTION_COPY)
-
-        #self.filelistview.connect("drag_data_get", self.dnd_data_getdata)
         
         
     def AddFileListColumns(self):
@@ -121,21 +113,11 @@ class appGui:
         self.filelistview.append_column(column)
         return
         
-    def GetBT5DirList(self):
-        """Function to parse the directory listing of the current working directory
-             and create a list of filenames that are BT5 data files"""
-             
-        dirlist = os.listdir(os.getcwd())
-        
-        bt5list = [ x for x in dirlist if (x.find('.bt5') > 0 and usans.isBT5Data(x))]
-        
-        return bt5list
-        
     
     def FillFileList(self, filenames):
         self.filelist.clear()
         for filename in filenames:
-                self.filelist.append([filename, 0, 0, 0, 0])
+                self.filelist.append([filename, 0, None])
         return
             
     def RefreshFileList(self,filenames):        
@@ -147,12 +129,11 @@ class appGui:
         treestore.foreach(self.filelist_match_filename, (filenames,deletelist))
           
         for filename in filenames:
-            self.filelist.append([filename, 0, 0, 0, 0])
+            self.filelist.append([filename, 0, None])
         
         deletelist.reverse()
         for path in deletelist:
             treestore.remove(treestore.get_iter(path))
-        #print len(filenames)    
         return
 
     def filelist_match_filename(self, model, path, iter, data):
@@ -168,7 +149,7 @@ class appGui:
     
     def handle_refreshlist(self,widget):
 
-        self.RefreshFileList(self.GetBT5DirList())
+        self.RefreshFileList(usans.GetBT5DirList())
         
         return
 
@@ -186,10 +167,9 @@ class appGui:
         
     def handle_filter(self,widget):
         
-        print "Filtering"
         del self.filter_string[:]
         self.filter_string.append(self.filter_entry.get_text())
-        print self.filter_string[0]
+        #print self.filter_string[0]
         self.filelistfilter.refilter()
         
         return
@@ -208,7 +188,7 @@ class appGui:
         response = chooser.run()
         if response == gtk.RESPONSE_OK:
             os.chdir(chooser.get_filename())
-            self.FillFileList(self.GetBT5DirList())
+            self.FillFileList(usans.GetBT5DirList())
         chooser.destroy()
 
     def handle_plot_toggle(self, filter_cell, filter_path, filter_model):
@@ -218,132 +198,17 @@ class appGui:
 
         if model[path][1]:
             #load data
-            data,metadata = usans.getBT5DataFromFile(model[path][0])
-            model[path][2] = (data,metadata)
+            model[path][2] = BT5DataSet(model[path][0])
             #add plot
-            self.add_plot(model, path)
+            model[path][2].plot_dataset(self.axis,self.plottype)
+            self.rescale_and_redraw()
         else:
             #remove plot
-            self.remove_plot(model, path)
+            model[path][2].remove_plot()
+            self.rescale_and_redraw()
         return
 
-    def add_plot(self, model, path):
-        
-        self.make_plottable_dataset(model, path, self.plottype)
-
-        if self.plottype == 'split':
-        	model[path][4] = self.axis.plot(model[path][3][0],model[path][3][1], 'o',
-											 model[path][3][0],model[path][3][2], 'o',
-											 model[path][3][0],model[path][3][3], 'o',
-											 model[path][3][0],model[path][3][4], 'o',
-											 model[path][3][0],model[path][3][5], 'o')
-        else:
-            model[path][4] = self.axis.plot(model[path][3][0],model[path][3][1], 'bo', picker=5)
-        
-        self.rescale_and_redraw()
-        #self.canvas.draw()
-        return
-
-    def make_plottable_dataset(self, model, path, type):
-         
-         data,metadata = model[path][2]
-                  
-         if type == 'total':
-             #generate totals
-             xdata = []
-             ydata = []     
-             
-             mvals = data.keys()
-             mvals.sort(usans.numeric_compare)
-             for mval in mvals:
-                 xdata.append(mval)
-                 ydata.append(data[mval][1] + data[mval][2] + data[mval][4] + data[mval][5] + data[mval][6])
-             
-             model[path][3] = [xdata, ydata]
-             
-         elif type == 'rate':
-             # generate countrate
-             xdata = []
-             ydata = []
-             
-             mvals = data.keys()
-             mvals.sort(usans.numeric_compare)
-             for mval in mvals:
-                 xdata.append(mval)
-             
-             if metadata['base'] == 'TIME':
-             	#Counting in TIME base, so normalize by seconds
-             	cnttime = metadata['mon']
-             	for mval in mvals:
-                     ydata.append((data[mval][1] + data[mval][2] + data[mval][4] + data[mval][5] + data[mval][6])/cnttime)
-             else:
-             	#Must be counting in monitor base so normalize by monitor
-             	moncts = metadata['mon']
-                for mval in mvals:
-                    ydata.append((data[mval][1] + data[mval][2] + data[mval][4] + data[mval][5] + data[mval][6])/cnttime)
-             
-             model[path][3] = [xdata, ydata]
-             
-         elif type == 'trans':
-             xdata = []
-             ydata = []
-             
-             mvals = data.keys()
-             mvals.sort(usans.numeric_compare)
-             for mval in mvals:
-                 xdata.append(mval)
-                 ydata.append(data[mval][3])
-             
-             model[path][3] = [xdata, ydata]             
-         
-         elif type == 'mon':
-             xdata = []
-             ydata = []
-             
-             mvals = data.keys()
-             mvals.sort(usans.numeric_compare)
-             for mval in mvals:
-                 xdata.append(mval)
-                 ydata.append(data[mval][0])
-             
-             model[path][3] = [xdata, ydata]             
-             
-         elif type == 'split':
-             xdata = []
-             ydata1 = []
-             ydata2 = []
-             ydata3 = []
-             ydata4 = []
-             ydata5 = []
-             
-             mvals = data.keys()
-             mvals.sort(usans.numeric_compare)
-             for mval in mvals:
-                 xdata.append(mval)
-                 ydata1.append(data[mval][1])   
-                 ydata2.append(data[mval][2])   
-                 ydata3.append(data[mval][4])   
-                 ydata4.append(data[mval][5])   
-                 ydata5.append(data[mval][6])   
-
-             model[path][3] = [xdata,ydata1,ydata2,ydata3,ydata4,ydata5]
-         else:
-         	pass
-             
-         return
-
-    def remove_plot(self, model, path):
  
-    	for line in model[path][4]:
-    		self.axis.lines.remove(line)
-    	
-        if (len(self.axis.lines) > 0):
-	        self.rescale_and_redraw()
-    	else:
-            self.canvas.draw()	
-
-        return
-
     def handle_xaxis_loglin(self, widget):
 
 
@@ -372,7 +237,6 @@ class appGui:
     	    	
     	if widget.get_active():
     		self.plottype = widget.get_name().split('_')[1]
-    		#print self.plottype
     		
     	return
     	
@@ -389,14 +253,8 @@ class appGui:
         while iter:
             path = model.get_path(iter)
             if model[path][1] != 0:
-                for line in model[path][4]:
-                    self.axis.lines.remove(line)   
-                    model[path][1] = not model[path][1]         
+                model[path][2].remove_plot()
             iter = model.iter_next(iter)
-
-        #Remove any lines left over - shouldn't be any, but let's tidy up
-        #for line in self.axis.lines:
-             #self.axis.lines.remove(line)
         
         self.canvas.draw()
         return 
@@ -406,30 +264,32 @@ class appGui:
         xdata = []
         ydata = []
 
-        for line in self.axis.lines:
-        	if self.axis.get_xscale() == 'log':
-        		xdata.extend([xval for xval in line.get_xdata() if xval > 0])
-        	else:
-        		xdata.extend(line.get_xdata())
-        	if self.axis.get_yscale() == 'log':
-        		ydata.extend([xval for xval in line.get_ydata() if xval > 0])
-        	else:
-        		ydata.extend(line.get_ydata())
-      
-        #set limits
-        xmin = float(min(xdata))
-        xmax = float(max(xdata))
-        ymin = float(min(ydata))
-        ymax = float(max(ydata))	
+        if len(self.axis.lines) > 0:
 
-        #adjust for size of markers (sort of)
-        xmin = xmin - 0.1*abs(xmin)
-        xmax = xmax + 0.1*abs(xmax)
-        ymin = ymin - 0.1*abs(ymin)
-        ymax = ymax + 0.1*abs(ymax)
-                
-        self.axis.set_xlim(xmin,xmax)
-        self.axis.set_ylim(ymin,ymax)
+            for line in self.axis.lines:
+            	if self.axis.get_xscale() == 'log':
+            		xdata.extend([xval for xval in line.get_xdata() if xval > 0])
+            	else:
+            		xdata.extend(line.get_xdata())
+            	if self.axis.get_yscale() == 'log':
+            		ydata.extend([xval for xval in line.get_ydata() if xval > 0])
+            	else:
+            		ydata.extend(line.get_ydata())
+          
+            #set limits
+            xmin = float(min(xdata))
+            xmax = float(max(xdata))
+            ymin = float(min(ydata))
+            ymax = float(max(ydata))	
+    
+            #adjust for size of markers (sort of)
+            xmin = xmin - 0.1*abs(xmin)
+            xmax = xmax + 0.1*abs(xmax)
+            ymin = ymin - 0.1*abs(ymin)
+            ymax = ymax + 0.1*abs(ymax)
+                    
+            self.axis.set_xlim(xmin,xmax)
+            self.axis.set_ylim(ymin,ymax)
         
         #self.axis.autoscale_view()
         self.canvas.draw()
@@ -437,12 +297,29 @@ class appGui:
         return
 
     def handle_plot_click(self,event):
+        model = self.filelistview.get_model().get_model()
+        iter = model.iter_children(None)
+
+
         if isinstance(event.artist, matplotlib.lines.Line2D):
+            print "Clicked..."
             pickedline = event.artist
-            xdata = pickedline.get_xdata()
-            ydata = pickedline.get_ydata()
             ind = event.ind
-            print 'Plot Click: ',zip(numpy.take(xdata,ind), numpy.take(ydata,ind))
+            xdata = pickedline.get_xdata()
+
+            while iter:
+                path = model.get_path(iter)
+                if model[path][1] != 0:
+                    for line in model[path][2].plot:
+                        if line == pickedline:
+                            model[path][2].calcAlignVals(xdata[ind])
+                            label = self.wTree.get_widget("lbl_alignvals")
+                            label.set_text(model[path][2].alignvalstring)
+                            break
+                iter = model.iter_next(iter)
+        
+
+            
 
 app = appGui()
 gtk.main()
