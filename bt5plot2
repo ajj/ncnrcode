@@ -232,13 +232,24 @@ class appGui:
         else:
             self.axis.set_yscale('log')        
 
-        self.canvas.draw()
+        self.rescale_and_redraw()
         return
        
     def handle_plot_type_change(self,widget):
     	    	
     	if widget.get_active():
     		self.plottype = widget.get_name().split('_')[1]
+
+	model = self.filelistview.get_model().get_model()
+        iter = model.iter_children(None)
+        while iter:
+            path = model.get_path(iter)
+            if model[path][1] != 0:
+                model[path][2].remove_plot()
+		model[path][2].plot_dataset(self.axis,self.plottype)
+            iter = model.iter_next(iter)
+
+	self.rescale_and_redraw()
     		
     	return
     	
