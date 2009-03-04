@@ -76,6 +76,8 @@ class appGui:
         self.AddFileListColumns()
 
         #fill the file list
+	if (len(sys.argv) > 1):
+		os.chdir(sys.argv[1])
         self.FillFileList(usans.GetBT5DirList())
 
         # Set up graphing widget to display xpeek data
@@ -254,6 +256,7 @@ class appGui:
             path = model.get_path(iter)
             if model[path][1] != 0:
                 model[path][2].remove_plot()
+		model[path][1] = not model[path][1]
             iter = model.iter_next(iter)
         
         self.canvas.draw()
