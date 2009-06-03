@@ -126,6 +126,10 @@ class appGui:
         #print len(filenames)
         
         deletelist = []
+        tempstr = self.filter_entry.get_text()
+        del self.filter_string[:]
+        self.filter_string.append("")
+        self.filelistfilter.refilter()
         
         treestore = self.filelistview.get_model()
         treestore.foreach(self.filelist_match_filename, (filenames,deletelist))
@@ -136,6 +140,10 @@ class appGui:
         deletelist.reverse()
         for path in deletelist:
             treestore.remove(treestore.get_iter(path))
+
+        del self.filter_string[:]
+        self.filter_string.append(tempstr)
+        self.filelistfilter.refilter()
         return
 
     def filelist_match_filename(self, model, path, iter, data):
