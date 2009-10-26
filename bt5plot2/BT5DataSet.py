@@ -228,6 +228,32 @@ class BT5DataSet:
                                   xdata,ydata3, 'o',
                                   xdata,ydata4, 'o',
                                   xdata,ydata5, 'o')    
+        elif plottype == 'nrate':
+            # generate countrate
+			# produce monitor normalized  plot
+            xdata = []
+            ydata = []
+            
+            mvals = data.keys()
+            mvals.sort(usans.numeric_compare)
+            for mval in mvals:
+                xdata.append(mval)
+             
+            if metadata['base'] == 'TIME':
+                #Counting in TIME base, so normalize by seconds and monitor
+                cnttime = metadata['mon']
+                for mval in mvals:
+                    ydata.append((data[mval][1] + data[mval][2] + data[mval][4] + data[mval][5] + data[mval][6]) / cnttime / data[mval][0])
+            else:
+                #Must be counting in monitor base so normalize by monitor
+                moncts = metadata['mon']
+                for mval in mvals:
+                    ydata.append((data[mval][1] + data[mval][2] + data[mval][4] + data[mval][5] + data[mval][6]) / moncts)
+            
+            self.plot = axes.plot(xdata,ydata, 'bo', picker=5)
+ 
+ 
+
             
     def remove_plot(self):
         
