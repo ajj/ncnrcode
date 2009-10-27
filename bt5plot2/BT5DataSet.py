@@ -303,9 +303,10 @@ class BT5DataSet:
         #AJJ 10/26/09
         #This is frankly hideous. Surely there is a better way for me 
         #to iterate through the contents of self.plot
+        print self.plot
         #Is it a plot with errorbars?
         if type(self.plot[0]) is tuple:
-            #print "Split plot with errorbars"
+            print "Split plot with errorbars"
             for splot in self.plot:
                 splot[0].remove()
                 for linec in splot[1]:
@@ -313,11 +314,11 @@ class BT5DataSet:
                 for linec in splot[2]:
                     linec.remove()
         elif type(self.plot[0]).__name__ == 'Line2D' and type(self.plot[1]).__name__ == 'Line2D':
-            #print "Split plot without errorbars"
+            print "Split plot without errorbars"
             for splot in self.plot:
                 splot.remove()
         elif type(self.plot[0]).__name__ == 'Line2D':
-            #print "Plot with errorbars"
+            print "Plot with errorbars"
             for line in self.plot[0:1]:
                 axes = line.get_axes()
                 axes.lines.remove(line)
