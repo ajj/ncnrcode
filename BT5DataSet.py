@@ -304,6 +304,7 @@ class BT5DataSet:
         #This is frankly hideous. Surely there is a better way for me 
         #to iterate through the contents of self.plot
         print self.plot
+        print type(self.plot[0]).__name__
         #Is it a plot with errorbars?
         if type(self.plot[0]) is tuple:
             print "Split plot with errorbars"
