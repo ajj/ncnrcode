@@ -163,7 +163,7 @@
 			  <child>
 			    <widget class="GtkRadioMenuItem" id="rmi_nrate">
 			      <property name="visible">True</property>
-			      <property name="label" translatable="yes">Monitor Normalized Rate</property>
+			      <property name="label" translatable="yes">Counts/10^6 Monitor Counts</property>
 			      <property name="use_underline">True</property>
 			      <property name="active">False</property>
 			      <property name="group">rmi_total</property>
@@ -248,6 +248,15 @@
 			      <signal name="activate" handler="on_yaxis_loglin_activate"/>
 			    </widget>
 			  </child>
+              <child>
+                <widget class="GtkMenuItem" id="yerrbars1">
+                  <property name="visible">True</property>
+                  <property name="label" translatable="yes">_Error Bars</property>
+                  <property name="use_underline">True</property>
+                  <signal name="activate" handler="on_yaxis_errorbars_activate"/>
+                </widget>
+              </child>
+
 			</widget>
 		      </child>
 		    </widget>
