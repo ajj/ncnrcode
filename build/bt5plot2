@@ -42,7 +42,6 @@ class appGui:
                      "on_set_data_dir1_activate" : self.setdatadir,
                      "on_xaxis_loglin_activate" : self.handle_xaxis_loglin,
                      "on_yaxis_loglin_activate" : self.handle_yaxis_loglin,
-                     "on_yaxis_errorbars_activate" : self.handle_yaxis_errorbars,
                      "on_plot_type_activate" : self.handle_plot_type_change,
                      "on_btn_ClearPlot_clicked" : self.handle_clearplot,
                      "on_btn_Refresh_clicked" : self.handle_refreshlist,
@@ -52,7 +51,6 @@ class appGui:
         #This is a bit clunky, but never mind.
         #Set default plottype to rate. Glade definition sets that as default active button in menu
         self.plottype = 'rate'
-        self.yerrorbars = True
         
         self.wTree.signal_autoconnect(event_dic)
 
@@ -67,7 +65,7 @@ class appGui:
         self.filter_string = []
         self.filter_string.append(self.filter_entry.get_text())
         self.filelistfilter = self.filelist.filter_new()
-        self.filelistfilter.set_visible_func(self.filter_filelist, self.filter_string)
+        self.filelistfilter.set_visible_func(self.filter_filelist,self.filter_string)
 
         self.filelistview.set_model(self.filelistfilter)
 
@@ -82,7 +80,7 @@ class appGui:
 		os.chdir(sys.argv[1])
         self.FillFileList(usans.GetBT5DirList())
 
-        # Set up graphing widget to display data
+        # Set up graphing widget to display xpeek data
         self.figure = Figure(figsize=(4, 4), dpi=72)
         self.axis = self.figure.add_subplot(111)
         self.axis.set_yscale('log')
@@ -93,14 +91,14 @@ class appGui:
         self.axis.grid(True)
         
         self.canvas = FigureCanvasGTK(self.figure)
-        self.figure.canvas.mpl_connect('pick_event', self.handle_plot_click)
+        self.figure.canvas.mpl_connect('pick_event',self.handle_plot_click)
         self.canvas.show()
         
         self.plotView = self.wTree.get_widget("vbox4")
         self.plotView.pack_start(self.canvas, True, True)    
         
         self.metadataView = self.wTree.get_widget("tv_metadata")
-        self.mdlist = gtk.ListStore(str, str)
+        self.mdlist = gtk.ListStore(str,str)
         
         
     def AddFileListColumns(self):
@@ -124,7 +122,7 @@ class appGui:
                 self.filelist.append([filename, 0, None])
         return
             
-    def RefreshFileList(self, filenames):        
+    def RefreshFileList(self,filenames):        
         #print len(filenames)
         
         deletelist = []
@@ -134,7 +132,7 @@ class appGui:
         self.filelistfilter.refilter()
         
         treestore = self.filelistview.get_model()
-        treestore.foreach(self.filelist_match_filename, (filenames, deletelist))
+        treestore.foreach(self.filelist_match_filename, (filenames,deletelist))
           
         for filename in filenames:
             self.filelist.append([filename, 0, None])
@@ -150,7 +148,7 @@ class appGui:
 
     def filelist_match_filename(self, model, path, iter, data):
         
-        mval = model.get_value(iter, 0)
+        mval = model.get_value(iter,0)
         
         if mval in data[0]:
             del data[0][data[0].index(mval)]
@@ -159,7 +157,7 @@ class appGui:
             
         return False
     
-    def handle_refreshlist(self, widget):
+    def handle_refreshlist(self,widget):
 
         self.RefreshFileList(usans.GetBT5DirList())
         
@@ -167,8 +165,8 @@ class appGui:
 
     def filter_filelist(self, model, iter, data):
         
-        if model.get_value(iter, 0):        
-            match = re.match(data[0], model.get_value(iter, 0))
+        if model.get_value(iter,0):        
+            match = re.match(data[0],model.get_value(iter,0))
         else:
             match = None
         
@@ -177,7 +175,7 @@ class appGui:
         else:
             return True
         
-    def handle_filter(self, widget):
+    def handle_filter(self,widget):
         
         del self.filter_string[:]
         self.filter_string.append(self.filter_entry.get_text())
@@ -212,7 +210,7 @@ class appGui:
             #load data
             model[path][2] = BT5DataSet(model[path][0])
             #add plot
-            model[path][2].plot_dataset(self.axis, self.plottype, self.yerrorbars)
+            model[path][2].plot_dataset(self.axis,self.plottype)
             self.rescale_and_redraw()
         else:
             #remove plot
@@ -244,45 +242,26 @@ class appGui:
 
         self.rescale_and_redraw()
         return
- 
-    def handle_yaxis_errorbars(self, widget):
-        
-        if (self.yerrorbars == True):
-            self.yerrorbars = False
-        else:
-            self.yerrorbars = True
-
-        model = self.filelistview.get_model().get_model()
-        iter = model.iter_children(None)
-        while iter:
-            path = model.get_path(iter)
-            if model[path][1] != 0:
-                model[path][2].remove_plot()
-                model[path][2].plot_dataset(self.axis, self.plottype, self.yerrorbars)
-            iter = model.iter_next(iter)
-
-        self.rescale_and_redraw()
-        return
        
-    def handle_plot_type_change(self, widget):
+    def handle_plot_type_change(self,widget):
     	    	
     	if widget.get_active():
     		self.plottype = widget.get_name().split('_')[1]
 
-        model = self.filelistview.get_model().get_model()
+	model = self.filelistview.get_model().get_model()
         iter = model.iter_children(None)
         while iter:
             path = model.get_path(iter)
             if model[path][1] != 0:
                 model[path][2].remove_plot()
-                model[path][2].plot_dataset(self.axis, self.plottype, self.yerrorbars)
+		model[path][2].plot_dataset(self.axis,self.plottype)
             iter = model.iter_next(iter)
 
-        self.rescale_and_redraw()
+	self.rescale_and_redraw()
     		
     	return
     	
-    def handle_clearplot(self, widget):
+    def handle_clearplot(self,widget):
         
         self.clearplot()
         
@@ -296,7 +275,7 @@ class appGui:
             path = model.get_path(iter)
             if model[path][1] != 0:
                 model[path][2].remove_plot()
-                model[path][1] = not model[path][1]
+		model[path][1] = not model[path][1]
             iter = model.iter_next(iter)
         
         self.canvas.draw()
@@ -326,26 +305,26 @@ class appGui:
             ymax = float(max(ydata))	
     
             #adjust for size of markers (sort of)
-            xmin = xmin - 0.1 * abs(xmin)
-            xmax = xmax + 0.1 * abs(xmax)
-            ymin = ymin - 0.1 * abs(ymin)
-            ymax = ymax + 0.1 * abs(ymax)
+            xmin = xmin - 0.1*abs(xmin)
+            xmax = xmax + 0.1*abs(xmax)
+            ymin = ymin - 0.1*abs(ymin)
+            ymax = ymax + 0.1*abs(ymax)
                     
-            self.axis.set_xlim(xmin, xmax)
-            self.axis.set_ylim(ymin, ymax)
+            self.axis.set_xlim(xmin,xmax)
+            self.axis.set_ylim(ymin,ymax)
         
         #self.axis.autoscale_view()
         self.canvas.draw()
 
         return
 
-    def handle_plot_click(self, event):
+    def handle_plot_click(self,event):
         model = self.filelistview.get_model().get_model()
         iter = model.iter_children(None)
 
 
         if isinstance(event.artist, matplotlib.lines.Line2D):
-            #print "Clicked..."
+            print "Clicked..."
             pickedline = event.artist
             ind = event.ind
             xdata = pickedline.get_xdata()

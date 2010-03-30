@@ -12,6 +12,7 @@ class BT5DataSet:
         self.metadata = {}
         self.alignvals = {}
         self.alignvalstring = ''
+        self.scanmot = ''
 
         if (self.fileName != None):
             self.getBT5DataFromFile(self.fileName)
@@ -20,10 +21,10 @@ class BT5DataSet:
     def getBT5DataFromFile(self,fileName):
         '''
         Takes a filename and returns a dictionary of the detector values
-        keyed by varying value (ususally A2 or A5)
+        keyed by varying value (usually A2 or A5)
         '''
     
-        if usans.isBT5Data(fileName):
+        if usans.isBT5Data(fileName) == 1:
     
             motlist = []
     
@@ -53,6 +54,8 @@ class BT5DataSet:
             motlist.append(inputdata[10].split()[1:]) 
             self.metadata['motorvals'] = motlist
         
+            self.scanmot = inputdata[12].split()[0]
+        
             for index in range(13, len(inputdata), 2):
                 self.detdata[float(inputdata[index].split()[0])] = inputdata[index + 1].split(',')    
     
@@ -61,8 +64,7 @@ class BT5DataSet:
                     self.detdata[key][val] = int(self.detdata[key][val])
     
             inputfile.close()
-
-
+                    
     
     
     def printDetectorData(self):
@@ -102,12 +104,13 @@ class BT5DataSet:
         self.alignvals['Sum'] = self.detdata[motorval][1] + self.detdata[motorval][2] + self.detdata[motorval][4] + self.detdata[motorval][5] + self.detdata[motorval][6]     
         self.alignvals['Monitor'] = self.detdata[motorval][0]
         self.alignvals['Sum/Monitor'] = float(self.alignvals['Sum'])/float(self.alignvals['Monitor'])
-          
-        self.alignvalstring = "#4: "+repr(self.alignvals['Central'])
-        self.alignvalstring += "      Trans: "+repr(self.alignvals['Trans'])
-        self.alignvalstring += "      Sum: "+repr(self.alignvals['Sum'])
-        self.alignvalstring += "      MCR: "+repr(self.alignvals['Monitor'])
-        self.alignvalstring += "      Sum/MCR: %5.3f" % self.alignvals['Sum/Monitor']
+        
+        self.alignvalstring = self.scanmot+": %5.2f" % motorval  
+        self.alignvalstring += "   #4: "+repr(self.alignvals['Central'])
+        self.alignvalstring += "   Trans: "+repr(self.alignvals['Trans'])
+        self.alignvalstring += "\nSum: "+repr(self.alignvals['Sum'])
+        self.alignvalstring += "   MCR: "+repr(self.alignvals['Monitor'])
+        self.alignvalstring += "   Sum/MCR: %5.3f" % self.alignvals['Sum/Monitor']
     
     def maxDetCount(self, detector):
         '''
@@ -303,11 +306,11 @@ class BT5DataSet:
         #AJJ 10/26/09
         #This is frankly hideous. Surely there is a better way for me 
         #to iterate through the contents of self.plot
-        print self.plot
-        print type(self.plot[0]).__name__
+        #print self.plot
+        #print type(self.plot[0]).__name__
         #Is it a plot with errorbars?
         if type(self.plot[0]) is tuple:
-            print "Split plot with errorbars"
+            #print "Split plot with errorbars"
             for splot in self.plot:
                 splot[0].remove()
                 for linec in splot[1]:
@@ -315,11 +318,11 @@ class BT5DataSet:
                 for linec in splot[2]:
                     linec.remove()
         elif type(self.plot[0]).__name__ == 'Line2D' and type(self.plot[1]).__name__ == 'Line2D':
-            print "Split plot without errorbars"
+            #print "Split plot without errorbars"
             for splot in self.plot:
                 splot.remove()
         elif type(self.plot[0]).__name__ == 'Line2D':
-            print "Plot with errorbars"
+            #print "Plot with errorbars"
             for line in self.plot[0:1]:
                 axes = line.get_axes()
                 axes.lines.remove(line)
