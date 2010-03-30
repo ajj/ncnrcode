@@ -161,18 +161,6 @@
 			  </child>
 
 			  <child>
-			    <widget class="GtkRadioMenuItem" id="rmi_nrate">
-			      <property name="visible">True</property>
-			      <property name="label" translatable="yes">Counts/10^6 Monitor Counts</property>
-			      <property name="use_underline">True</property>
-			      <property name="active">False</property>
-			      <property name="group">rmi_total</property>
-			      <signal name="activate" handler="on_plot_type_activate" last_modification_time="Tue, 11 Nov 2008 15:48:27 GMT"/>
-			    </widget>
-			  </child>
-
-
-			  <child>
 			    <widget class="GtkRadioMenuItem" id="rmi_trans">
 			      <property name="visible">True</property>
 			      <property name="label" translatable="yes">Transmission</property>
@@ -248,15 +236,6 @@
 			      <signal name="activate" handler="on_yaxis_loglin_activate"/>
 			    </widget>
 			  </child>
-              <child>
-                <widget class="GtkMenuItem" id="yerrbars1">
-                  <property name="visible">True</property>
-                  <property name="label" translatable="yes">_Error Bars</property>
-                  <property name="use_underline">True</property>
-                  <signal name="activate" handler="on_yaxis_errorbars_activate"/>
-                </widget>
-              </child>
-
 			</widget>
 		      </child>
 		    </widget>
@@ -512,7 +491,7 @@
 		      <property name="label" translatable="yes"></property>
 		      <property name="use_underline">False</property>
 		      <property name="use_markup">False</property>
-		      <property name="justify">GTK_JUSTIFY_CENTER</property>
+		      <property name="justify">GTK_JUSTIFY_LEFT</property>
 		      <property name="wrap">False</property>
 		      <property name="selectable">False</property>
 		      <property name="xalign">0.5</property>
