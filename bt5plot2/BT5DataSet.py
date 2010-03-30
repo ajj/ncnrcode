@@ -157,13 +157,16 @@ class BT5DataSet:
             for mval in mvals:
                 xdata.append(mval)
                 ydata.append(data[mval][1] + data[mval][2] + data[mval][4] + data[mval][5] + data[mval][6])
-                yerror.append(math.sqrt(ydata[len(ydata)-1]))
+		if (ydata[len(ydata)-1] == 0):
+		    yerror.append(0)
+                else:
+                    yerror.append(math.sqrt(ydata[len(ydata)-1]))
             
             axes.set_ylabel("Counts")
             if yerrorbars == True:
                 self.plot = axes.errorbar(xdata,ydata,yerror,None,'bo', picker=5)
             else:
-                self.plot = axes.plot(xdata,ydata,'bo',picker=5)
+                self.plot = axes.errorbar(xdata,ydata,None,None,'bo', picker=5)
                 
         elif plottype == 'rate':
             # generate countrate
@@ -181,20 +184,30 @@ class BT5DataSet:
                 cnttime = metadata['mon']
                 for mval in mvals:
                     ydata.append((data[mval][1] + data[mval][2] + data[mval][4] + data[mval][5] + data[mval][6]) / cnttime)
-                    yerror.append(math.sqrt(ydata[len(ydata)-1])/math.sqrt(cnttime))
+                    if (ydata[len(ydata)-1] == 0):
+                        yerror.append(0)
+                    else:
+                        yerror.append(math.sqrt(ydata[len(ydata)-1])/math.sqrt(cnttime))
                     axes.set_ylabel("Counts/second")
             else:
                 #Must be counting in monitor base so normalize by monitor
                 moncts = metadata['mon']
                 for mval in mvals:
                     ydata.append((data[mval][1] + data[mval][2] + data[mval][4] + data[mval][5] + data[mval][6]) / cnttime)
-                    yerror.append(math.sqrt(ydata[len(ydata)-1])/math.sqrt(cnttime))
+                    if (ydata[len(ydata)-1] == 0):
+                        yerror.append(0)
+                    else:
+                        yerror.append(math.sqrt(ydata[len(ydata)-1])/math.sqrt(cnttime))
                     axes.set_ylabel("Counts/Monitor Count")
             
             if yerrorbars == True:
                 self.plot = axes.errorbar(xdata,ydata,yerror,None,'bo', picker=5)
             else:
-                self.plot = axes.plot(xdata,ydata,'bo',picker=5) 
+                self.plot = axes.errorbar(xdata,ydata,None,None,'bo', picker=5)
+
+            print xdata
+            print ydata
+            print yerror
                 
         elif plottype == 'trans':
             xdata = []
@@ -206,13 +219,16 @@ class BT5DataSet:
             for mval in mvals:
                 xdata.append(mval)
                 ydata.append(data[mval][3])
-                yerror.append(math.sqrt(ydata[len(ydata)-1]))
+                if (ydata[len(ydata)-1] == 0):
+                    yerror.append(0)
+                else:
+                    yerror.append(math.sqrt(ydata[len(ydata)-1]))
 
             axes.set_ylabel("Transmission Detector Counts")
             if yerrorbars == True:
                 self.plot = axes.errorbar(xdata,ydata,yerror,None,'bo', picker=5)
             else:
-                self.plot = axes.plot(xdata,ydata,'bo',picker=5) 
+                self.plot = axes.errorbar(xdata,ydata,None,None,'bo', picker=5)
             
          
         elif plottype == 'mon':
@@ -231,7 +247,7 @@ class BT5DataSet:
             if yerrorbars == True:
                 self.plot = axes.errorbar(xdata,ydata,yerror,None,'bo', picker=5)
             else:
-                self.plot = axes.plot(xdata,ydata,'bo',picker=5)             
+                self.plot = axes.errorbar(xdata,ydata,None,None,'bo', picker=5)
              
         elif plottype == 'split':
             xdata = []
@@ -269,11 +285,11 @@ class BT5DataSet:
                              axes.errorbar(xdata,ydata4,yerror4,None, 'o'),
                              axes.errorbar(xdata,ydata5,yerror5,None, 'o')) 
             else:
-                 self.plot = axes.plot(xdata,ydata1, 'o',
-                                      xdata,ydata2, 'o',
-                                      xdata,ydata3, 'o',
-                                      xdata,ydata4, 'o',
-                                      xdata,ydata5, 'o')   
+                self.plot = (axes.errorbar(xdata,ydata1,None,None, 'o'),
+                             axes.errorbar(xdata,ydata2,None,None, 'o'),
+                             axes.errorbar(xdata,ydata3,None,None, 'o'),
+                             axes.errorbar(xdata,ydata4,None,None, 'o'),
+                             axes.errorbar(xdata,ydata5,None,None, 'o')) 
             
         elif plottype == 'nrate':
             # generate countrate
@@ -290,39 +306,33 @@ class BT5DataSet:
             #Always normalize by appropriate monitor counts
             for mval in mvals:
                  ydata.append((data[mval][1] + data[mval][2] + data[mval][4] + data[mval][5] + data[mval][6]) / (data[mval][0]/1e6))
-                 yerror.append(math.sqrt(ydata[len(ydata)-1])/math.sqrt(data[mval][0]/1e6))
+                 if (ydata[len(ydata)-1] == 0):
+                     yerror.append(0)
+                 else:
+                     yerror.append(math.sqrt(ydata[len(ydata)-1])/math.sqrt(data[mval][0]/1e6))
 
             axes.set_ylabel("Counts / (10^6 Monitor Counts)")
             if yerrorbars == True:
                 self.plot = axes.errorbar(xdata,ydata,yerror,None,'bo', picker=5)
             else:
-                self.plot = axes.plot(xdata,ydata,'bo',picker=5)               
+                self.plot = axes.errorbar(xdata,ydata,None,None,'bo', picker=5)
  
  
 
             
     def remove_plot(self):
 
-        #AJJ 10/26/09
-        #This is frankly hideous. Surely there is a better way for me 
-        #to iterate through the contents of self.plot
-        #print self.plot
-        #print type(self.plot[0]).__name__
-        #Is it a plot with errorbars?
+	#Is it a plot with errorbars?
         if type(self.plot[0]) is tuple:
-            #print "Split plot with errorbars"
+            #split plot
             for splot in self.plot:
                 splot[0].remove()
                 for linec in splot[1]:
                     linec.remove()
                 for linec in splot[2]:
                     linec.remove()
-        elif type(self.plot[0]).__name__ == 'Line2D' and type(self.plot[1]).__name__ == 'Line2D':
-            #print "Split plot without errorbars"
-            for splot in self.plot:
-                splot.remove()
-        elif type(self.plot[0]).__name__ == 'Line2D':
-            #print "Plot with errorbars"
+	else:
+            #normal plot
             for line in self.plot[0:1]:
                 axes = line.get_axes()
                 axes.lines.remove(line)
@@ -330,7 +340,3 @@ class BT5DataSet:
                 linec.remove()
             for linec in self.plot[2]:
                 linec.remove()
-        else:
-            for line in self.plot:
-                axes = line.get_axes()
-                axes.lines.remove(line)
