@@ -205,9 +205,6 @@ class BT5DataSet:
             else:
                 self.plot = axes.errorbar(xdata,ydata,None,None,'bo', picker=5)
 
-            print xdata
-            print ydata
-            print yerror
                 
         elif plottype == 'trans':
             xdata = []
