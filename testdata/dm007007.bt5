@@ -1,0 +1,15 @@
+'dm007007.bt5' 'Mar  6 2007 10:25' 'I'       1600.    1  'TIME'   10  'RAW'
+  Filename         Date            Scan       Mon    Prf  Base   #pts  Type
+dm007 95% emulsion CM (dd) 1mm 1/2" cd ap         
+   0    0    0    0   0   0   0   0.0000     0.00000 0.00000   0.00000    2
+ Collimation      Mosaic    Wavelength   T-Start   Incr.   H-field #Det    
+  1       0.00000    0.00000    0.00000
+  2      50.00000    5.00000   95.00000
+  3       0.00000    0.00000    0.00000
+  4       0.00000    0.00000    0.00000
+  5      20.00000    0.00000   20.00000
+  6       0.00000    0.00000    0.00000
+ Mot:    Start       Step      End
+     A2       MIN      MONITOR      COUNTS      EXTRA  
+     50.000   26.67    46223510           9    23508274
+ 46223510,9,13,23508237,9,4,11,0,0,0,0,0,0,0,0,0
