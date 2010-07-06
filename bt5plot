@@ -33,7 +33,7 @@ class appGui:
     
     def __init__(self):
         
-        gladefile = "bt5plot2.glade"
+        gladefile = "bt5plot.glade"
         self.windowname = "win_Main"
         self.wTree = gtk.glade.XML(gladefile, self.windowname)
 
