@@ -6,7 +6,9 @@ class BT5DataGroup:
     def __init__(self, dataSetList=None):
         
         self.isPlotted = False
-            
+        self.groupName = None
+        if dataSetList != None:
+            self.groupName = dataSetList[0].fileName[0:5]    
                 
     def addDataSet(self,addList):
         '''Add data sets to the group. Takes a list of data set objects'''
@@ -34,5 +36,3 @@ class BT5DataGroup:
         Determine which data set the motor val belongs to and call function from that class.
         
         '''
-        
-    

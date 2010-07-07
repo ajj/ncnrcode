@@ -37,6 +37,8 @@ def GetBT5DirList():
     
     bt5list = [ x for x in dirlist if (x.find('.bt5') > 0 and isBT5Data(x))]
     
+    bt5list.sort(key=lambda s: os.path.getmtime(s))
+    
     return bt5list
 
 if __name__ == '__main__':

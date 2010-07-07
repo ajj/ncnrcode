@@ -13,6 +13,7 @@ from matplotlib.backends.backend_gtk import FigureCanvasGTK, NavigationToolbar
 
 import usans
 from BT5DataSet import BT5DataSet
+from BT5DataGroup import BT5DataGroup
 
 try:
     import pygtk
@@ -32,8 +33,10 @@ class appGui:
     TARGETS = [('STRING', gtk.TARGET_SAME_APP, 0)]
     
     def __init__(self):
+
+        runpath = os.path.dirname(os.path.realpath(__file__))
         
-        gladefile = "bt5plot.glade"
+        gladefile = runpath+"/bt5plot.glade"
         self.windowname = "win_Main"
         self.wTree = gtk.glade.XML(gladefile, self.windowname)
 
@@ -59,7 +62,7 @@ class appGui:
         # Set up file list
         self.filelistview = self.wTree.get_widget("tv_filelist")
         
-        self.filelist = gtk.ListStore(str, 'gboolean', object)
+        self.filelist = gtk.TreeStore(str, 'gboolean', object)
         self.filelist.set_sort_column_id(0, gtk.SORT_ASCENDING)
 
         # Set up filtering of file list
@@ -120,10 +123,51 @@ class appGui:
     
     def FillFileList(self, filenames):
         self.filelist.clear()
-        for filename in filenames:
-                self.filelist.append([filename, 0, None])
+        
+        groupList = self.generateDataGroups(filenames)
+        
+        for group in groupList:
+                self.filelist.append(None, [group.groupName, 0, None])
+                
         return
             
+            
+    def generateDataGroups(self,filenames):
+        
+        datasetList = []
+        dataindexList = []
+        datagroupList = []
+        
+        
+        #assuming list hsa come in sorted by date...
+        for filename in filenames:
+            #generate list of BT5DataSet objects
+            datasetList.append(BT5DataSet(filename))
+        
+        #print datasetList
+        #build list of list indices where either scanned motor is A2 or scanned motor is not A2
+        for dataset in datasetList:          
+            if dataset.scanmot == 'A2':
+                #check for 0
+                if 0 in dataset.detdata.keys():
+                    dataindexList.append(datasetList.index(dataset))
+            else:
+                dataindexList.append(datasetList.index(dataset))
+        
+        previndex = 0
+        for dataindex in dataindexList:
+            if dataindexList.index(dataindex) == len(dataindexList)-1:
+                nextindex = len(datasetList)
+            else:
+                nextindex = dataindex
+            datagroupList.append(BT5DataGroup(datasetList[previndex:nextindex]))
+            previndex = dataindex
+        
+        print len(datagroupList)
+        
+        return datagroupList
+    
+    
     def RefreshFileList(self, filenames):        
         #print len(filenames)
         
