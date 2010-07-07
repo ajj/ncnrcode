@@ -4,11 +4,13 @@ import math
 class BT5DataGroup:
     '''Class containing a group of BT5 data sets to be treated as one data group'''
     def __init__(self, dataSetList=None):
-                
+        
+        self.isPlotted = False
+            
                 
     def addDataSet(self,addList):
         '''Add data sets to the group. Takes a list of data set objects'''
-        for each dataSet in addList:
+        for dataSet in addList:
             self.dataSetList.append(dataSet)
         
     def removeDataSet(self,dataSetName):
