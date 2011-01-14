@@ -271,8 +271,7 @@ class appGui:
         if (self.axis.get_xscale() == "log"):
             self.axis.set_xscale('linear')
         else:
-            self.axis.set_xscale('log',nonposx='mask', nonposy='mask')        
-
+            self.axis.set_xscale('log')
 
         self.rescale_and_redraw()
         
@@ -284,7 +283,7 @@ class appGui:
         if (self.axis.get_yscale() == "log"):
             self.axis.set_yscale('linear')
         else:
-            self.axis.set_yscale('log',nonposx='mask', nonposy='mask')        
+            self.axis.set_yscale('log')
 
         self.rescale_and_redraw()
         return
