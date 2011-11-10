@@ -1,0 +1,15 @@
+August 2007
+Current stable version is r141 from http://danse.chem.utk.edu/svn/sans/utils/bt5/prepare/
+
+June 2007
+Current stable version is r119 from http://d121099/svn/sans/utils/bt5/prepare/
+
+December 2006
+Moved source into svn repository on DANSE/SANS server.
+
+Current stable version is r17 from http://d121099/svn/sans/utils/bt5/prepare/
+
+Running the modified version relies on the order of the PATH
+environment variable. 
+
+Altered ~/.bashrc and ~/.bash_profile to put $HOME/bin at start of $PATH.

@@ -29,7 +29,7 @@ set version {$Id: prepare.tcl,v 1.53 2007/07/23 16:34:14 nickm Exp $}
 set config(root) /usr/local/icp
 switch -regexp [info nameofexecutable] {
    "cwsh"  { set text_only 1 }
-   default { wm withdraw .; update; set text_only 0 }
+   default { wm withdraw .; update; set text_only 0; }
 }
 
 #=Global variables=============================================================
@@ -6425,6 +6425,7 @@ proc GUIBuild { } {
        wm protocol . WM_DELETE_WINDOW "CheckBufChange;exit"
        wm deiconify . ;# Show toplevel window
        if {$config(nsta) == 1} { wm geometry . 773x423+254+63 }
+       if {$config(nsta) == 5} { wm geometry . 1274x580+0+25  }
        update
    }
 }

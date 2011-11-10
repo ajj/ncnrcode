@@ -1,0 +1,7 @@
+#!/bin/bash
+WD=`pwd`
+
+cd $HOME/bin/bt5plot-2.1
+/usr/bin/nohup ./bt5plot $WD 2 >&1 > /dev/null &
+#./bt5plot2 $WD &
+cd -

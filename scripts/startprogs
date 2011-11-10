@@ -1,0 +1,51 @@
+#!/bin/bash
+
+#Copy in BUF files
+#cp $HOME/RunTemplates/* .
+loopvar=0
+while [ "$loopvar" != 1 ]; do
+	read -p "Do you want to copy default buffers (overwriting any that exist)? (y/n):"
+	if [ $REPLY == "y" ]; then
+		echo "Copying default buffers - Overwriting exisitng ones..."
+		cp $HOME/RunTemplates/* .
+		loopvar=1
+	elif [ $REPLY == "Y" ]; then
+		echo "Copying default buffers - Overwriting existing ones..."
+		cp $HOME/RunTemplates/* .
+		loopvar=1
+	elif [ $REPLY == "n" ]; then
+		echo "NOT Copying default buffers - using existing ones..."
+		loopvar=1
+	elif [ $REPLY == "N" ]; then
+		echo "NOT Copying default buffers - using existing ones..."
+		loopvar=1
+	else
+		echo "Invalid response. Try again"
+		loopvar=0
+	fi
+done
+
+#Start ICP and ICP Log
+echo 'Starting ICP...'
+/usr/bin/gnome-terminal --geometry=77x20+3-25 --hide-menubar --window-with-profile=ICP -e icp &
+/usr/bin/gnome-terminal --geometry=77x20+642-25 --hide-menubar --window-with-profile=ICPLog &
+
+#Start prepare
+echo 'Starting prepare...'
+/usr/bin/nohup $HOME/bin/prepare 2>&1 > /dev/null & 
+#/usr/bin/nohup $HOME/bin/bt5plot -geometry 910x643+1292+0 2>&1 > /dev/null &
+#/usr/bin/nohup /usr/local/icp/bin/xpeek -geometry 400x329+1296-0 2>&1 > /dev/null &
+
+#Start editor
+echo 'Starting editor...'
+#gedit doesn't take geometry flag. How annoying.
+/usr/bin/gedit &
+
+#Start xpeek
+echo 'Starting xpeek...'
+#Temporary xpeek from charlotte fix
+/usr/bin/ssh -fY xpeek@charlotte xpeek bt5
+
+#Start bt5plot
+echo 'Starting bt5plot...'
+$HOME/bin/bt5plot
