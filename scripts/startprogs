@@ -5,19 +5,14 @@
 loopvar=0
 while [ "$loopvar" != 1 ]; do
 	read -p "Do you want to copy default buffers (overwriting any that exist)? (y/n):"
-	if [ $REPLY == "y" ]; then
+	if [ $REPLY == "y" -o $REPLY == "Y" ]; then
 		echo "Copying default buffers - Overwriting exisitng ones..."
 		cp $HOME/RunTemplates/* .
 		loopvar=1
-	elif [ $REPLY == "Y" ]; then
-		echo "Copying default buffers - Overwriting existing ones..."
-		cp $HOME/RunTemplates/* .
-		loopvar=1
-	elif [ $REPLY == "n" ]; then
+	elif [ $REPLY == "n" -o $REPLY == "N" ]; then
 		echo "NOT Copying default buffers - using existing ones..."
-		loopvar=1
-	elif [ $REPLY == "N" ]; then
-		echo "NOT Copying default buffers - using existing ones..."
+		echo "Copying RESETBEAMPOS.COM"
+		cp $HOME/RunTemplates/*.COM .
 		loopvar=1
 	else
 		echo "Invalid response. Try again"
@@ -26,9 +21,10 @@ while [ "$loopvar" != 1 ]; do
 done
 
 #Start ICP and ICP Log
-echo 'Starting ICP...'
-/usr/bin/gnome-terminal --geometry=77x20+3-25 --hide-menubar --window-with-profile=ICP -e icp &
-/usr/bin/gnome-terminal --geometry=77x20+642-25 --hide-menubar --window-with-profile=ICPLog &
+#echo 'Starting ICP...'
+#/usr/bin/gnome-terminal --geometry=77x20+3-25 --hide-menubar --window-with-profile=ICP -e icp &
+#/usr/bin/gnome-terminal --geometry=77x20+642-25 --hide-menubar --window-with-profile=ICPLog &
+$HOME/bin/doicpwindows
 
 #Start prepare
 echo 'Starting prepare...'
