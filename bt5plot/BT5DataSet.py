@@ -276,17 +276,17 @@ class BT5DataSet:
             
             axes.set_ylabel("Counts")    
             if yerrorbars == True:
-                self.plot = (axes.errorbar(xdata,ydata1,yerror1,None, 'o'),
-                             axes.errorbar(xdata,ydata2,yerror2,None, 'o'),
-                             axes.errorbar(xdata,ydata3,yerror3,None, 'o'),
-                             axes.errorbar(xdata,ydata4,yerror4,None, 'o'),
-                             axes.errorbar(xdata,ydata5,yerror5,None, 'o')) 
+                self.plot = (axes.errorbar(xdata,ydata1,yerror1,None, 'o', label='2', c='b'),
+                             axes.errorbar(xdata,ydata2,yerror2,None, '<', label='1', c='r'),
+                             axes.errorbar(xdata,ydata3,yerror3,None, '>', label='3', c='g'),
+                             axes.errorbar(xdata,ydata4,yerror4,None, '^', label='4', c='c'),
+                             axes.errorbar(xdata,ydata5,yerror5,None, 'v', label='5', c='m'))            
             else:
-                self.plot = (axes.errorbar(xdata,ydata1,None,None, 'o'),
-                             axes.errorbar(xdata,ydata2,None,None, 'o'),
-                             axes.errorbar(xdata,ydata3,None,None, 'o'),
-                             axes.errorbar(xdata,ydata4,None,None, 'o'),
-                             axes.errorbar(xdata,ydata5,None,None, 'o')) 
+                self.plot = (axes.errorbar(xdata,ydata1,None,None, 'o', label='2', c='b'),
+                             axes.errorbar(xdata,ydata2,None,None, '<', label='1', c='r'),
+                             axes.errorbar(xdata,ydata3,None,None, '>', label='3', c='g'),
+                             axes.errorbar(xdata,ydata4,None,None, '^', label='4', c='c'),
+                             axes.errorbar(xdata,ydata5,None,None, 'v', label='5', c='m'))
             
         elif plottype == 'nrate':
             # generate countrate
